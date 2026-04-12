@@ -1,0 +1,246 @@
+-- Blues Duel Panel | Steal a Brainrot | 2026 FIXED
+-- Server-validated game requires network-based approaches
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local Humanoid = Character:WaitForChild("Humanoid")
+local HRP = Character:WaitForChild("HumanoidRootPart")
+
+-- GUI Setup (same as before)
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BluesDuelPanel"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game.CoreGui
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 320, 0, 380)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -190)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 30, 60)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundColor3 = Color3.fromRGB(15, 25, 55)
+Title.BorderSizePixel = 0
+Title.Text = "Blues Duel Panel"
+Title.TextColor3 = Color3.fromRGB(100, 150, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.Parent = MainFrame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 8)
+TitleCorner.Parent = Title
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -35, 0, 5)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseBtn.Text = "X"
+CloseBtn.TextColor3 = Color3.new(1, 1, 1)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 16
+CloseBtn.Parent = MainFrame
+local CloseBtnCorner = Instance.new("UICorner")
+CloseBtnCorner.CornerRadius = UDim.new(0, 6)
+CloseBtnCorner.Parent = CloseBtn
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+local MinBtn = Instance.new("TextButton")
+MinBtn.Size = UDim2.new(0, 30, 0, 30)
+MinBtn.Position = UDim2.new(1, -70, 0, 5)
+MinBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+MinBtn.Text = "−"
+MinBtn.TextColor3 = Color3.new(1, 1, 1)
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextSize = 20
+MinBtn.Parent = MainFrame
+local MinBtnCorner = Instance.new("UICorner")
+MinBtnCorner.CornerRadius = UDim.new(0, 6)
+MinBtnCorner.Parent = MinBtn
+local minimized = false
+MinBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        MainFrame:TweenSize(UDim2.new(0, 320, 0, 40), "Out", "Quad", 0.2, true)
+    else
+        MainFrame:TweenSize(UDim2.new(0, 320, 0, 380), "Out", "Quad", 0.2, true)
+    end
+end)
+
+local Container = Instance.new("Frame")
+Container.Size = UDim2.new(1, -20, 1, -60)
+Container.Position = UDim2.new(0, 10, 0, 50)
+Container.BackgroundTransparency = 1
+Container.Parent = MainFrame
+
+local yOffset = 0
+local function createToggle(name, callback)
+    local Toggle = Instance.new("TextButton")
+    Toggle.Size = UDim2.new(1, 0, 0, 35)
+    Toggle.Position = UDim2.new(0, 0, 0, yOffset)
+    Toggle.BackgroundColor3 = Color3.fromRGB(40, 50, 80)
+    Toggle.Text = name .. ": OFF"
+    Toggle.TextColor3 = Color3.new(1, 1, 1)
+    Toggle.Font = Enum.Font.Gotham
+    Toggle.TextSize = 14
+    Toggle.Parent = Container
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0, 6)
+    ToggleCorner.Parent = Toggle
+    local enabled = false
+    Toggle.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        Toggle.Text = name .. ": " .. (enabled and "ON" or "OFF")
+        Toggle.BackgroundColor3 = enabled and Color3.fromRGB(50, 150, 100) or Color3.fromRGB(40, 50, 80)
+        callback(enabled)
+    end)
+    yOffset = yOffset + 40
+end
+
+local function createTextbox(name, default, callback)
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(0.6, 0, 0, 35)
+    Label.Position = UDim2.new(0, 0, 0, yOffset)
+    Label.BackgroundColor3 = Color3.fromRGB(40, 50, 80)
+    Label.Text = name
+    Label.TextColor3 = Color3.new(1, 1, 1)
+    Label.Font = Enum.Font.Gotham
+    Label.TextSize = 14
+    Label.Parent = Container
+    local LabelCorner = Instance.new("UICorner")
+    LabelCorner.CornerRadius = UDim.new(0, 6)
+    LabelCorner.Parent = Label
+    
+    local Box = Instance.new("TextBox")
+    Box.Size = UDim2.new(0.35, 0, 0, 35)
+    Box.Position = UDim2.new(0.65, 0, 0, yOffset)
+    Box.BackgroundColor3 = Color3.fromRGB(30, 40, 70)
+    Box.Text = tostring(default)
+    Box.TextColor3 = Color3.new(1, 1, 1)
+    Box.Font = Enum.Font.Gotham
+    Box.TextSize = 14
+    Box.Parent = Container
+    local BoxCorner = Instance.new("UICorner")
+    BoxCorner.CornerRadius = UDim.new(0, 6)
+    BoxCorner.Parent = Box
+    Box.FocusLost:Connect(function()
+        local val = tonumber(Box.Text)
+        if val then callback(val) end
+    end)
+    yOffset = yOffset + 40
+end
+
+-- FIXED: Infinite Jump - Ground detection to prevent death
+local infJumpEnabled = false
+local lastJumpTime = 0
+createToggle("Infinite Jump", function(state)
+    infJumpEnabled = state
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled and Humanoid then
+        local currentTime = tick()
+        -- Only allow jump if grounded OR at least 0.3s passed (prevents death from spam)
+        if Humanoid:GetState() == Enum.HumanoidStateType.Freefall or currentTime - lastJumpTime > 0.3 then
+            Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            lastJumpTime = currentTime
+        end
+    end
+end)
+
+-- FIXED: WalkSpeed/JumpPower - Use property change instead of direct set
+createTextbox("WalkSpeed", 120, function(val)
+    if Humanoid then 
+        Humanoid.WalkSpeed = val
+        -- Reapply every frame to fight server resets
+        if not getgenv().WalkSpeedLoop then
+            getgenv().WalkSpeedLoop = RunService.Heartbeat:Connect(function()
+                if Humanoid and Humanoid.WalkSpeed ~= val then
+                    Humanoid.WalkSpeed = val
+                end
+            end)
+        end
+    end
+end)
+
+createTextbox("JumpPower", 80, function(val)
+    if Humanoid then 
+        Humanoid.JumpPower = val
+        if not getgenv().JumpPowerLoop then
+            getgenv().JumpPowerLoop = RunService.Heartbeat:Connect(function()
+                if Humanoid and Humanoid.JumpPower ~= val then
+                    Humanoid.JumpPower = val
+                end
+            end)
+        end
+    end
+end)
+
+-- FIXED: Gentle Float Bob - Reduced velocity to avoid server kick
+local bobConnection
+createToggle("Gentle Float Bob", function(state)
+    if bobConnection then bobConnection:Disconnect() bobConnection = nil end
+    if state then
+        local time = 0
+        bobConnection = RunService.Heartbeat:Connect(function(dt)
+            time = time + dt
+            if HRP then
+                -- Reduced from 8 to 3 for smoother float
+                HRP.Velocity = Vector3.new(HRP.Velocity.X, math.sin(time * 1.5) * 3, HRP.Velocity.Z)
+            end
+        end)
+    end
+end)
+
+-- FIXED: Auto Grab - Find ANY proximity prompt and fire instantly
+local autoGrabConnection
+createToggle("Auto Grab", function(state)
+    if autoGrabConnection then autoGrabConnection:Disconnect() autoGrabConnection = nil end
+    if state then
+        autoGrabConnection = RunService.Heartbeat:Connect(function()
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("ProximityPrompt") and obj.Enabled then
+                    -- Check distance manually since game might hide ActionText
+                    local parent = obj.Parent
+                    if parent and parent:IsA("BasePart") then
+                        local dist = (HRP.Position - parent.Position).Magnitude
+                        if dist <= obj.MaxActivationDistance then
+                            -- Fire with 0 hold time
+                            fireproximityprompt(obj, 0)
+                        end
+                    end
+                end
+            end
+            task.wait(0.2) -- Slightly faster check
+        end)
+    end
+end)
+
+-- FIXED: Anti Ragdoll - Force standing state when hit
+local antiRagdollConnection
+createToggle("Anti Ragdoll", function(state)
+    if antiRagdollConnection then antiRagdollConnection:Disconnect() antiRagdollConnection = nil end
+    if state then
+        antiRagdollConnection = Humanoid.StateChanged:Connect(function(old, new)
+            -- Prevent ragdoll/falling states
+            if new == Enum.HumanoidStateType.FallingDown or 
+               new == Enum.HumanoidStateType.Ragdoll or
+               new == Enum.HumanoidStateType.PlatformStanding then
+                Humanoid:ChangeState(Enum.HumanoidStateType.Running)
+            end
+        end)
+    end
+end)
