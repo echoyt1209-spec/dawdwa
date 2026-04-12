@@ -1,5 +1,5 @@
--- Blues Universal Script | Works on ALL Executors | 2026
--- No executor-specific functions required
+-- Blues Duel Panel | Delta Mobile Executor | 2026
+-- Fixed: Inf jump ground check, removed impossible features
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,72 +10,55 @@ local char = plr.Character or plr.CharacterAdded:Wait()
 local hum = char:WaitForChild("Humanoid")
 local hrp = char:WaitForChild("HumanoidRootPart")
 
--- Auto-reconnect on respawn
+-- Reconnect on respawn
 plr.CharacterAdded:Connect(function(newChar)
     char = newChar
-    task.wait(0.1)
     hum = newChar:WaitForChild("Humanoid")
     hrp = newChar:WaitForChild("HumanoidRootPart")
 end)
 
--- GUI Setup (Works on mobile + PC executors)
+-- GUI
 local gui = Instance.new("ScreenGui")
-gui.Name = "BluesUniversal"
+gui.Name = "BluesDuelPanel"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
-
--- Try CoreGui first, fallback to PlayerGui
-local success = pcall(function()
-    gui.Parent = game:GetService("CoreGui")
-end)
-if not success then
-    gui.Parent = plr:WaitForChild("PlayerGui")
-end
+gui.Parent = plr:WaitForChild("PlayerGui")
 
 local main = Instance.new("Frame")
-main.Size = UDim2.new(0, 320, 0, 420)
-main.Position = UDim2.new(0.5, -160, 0.5, -210)
-main.BackgroundColor3 = Color3.fromRGB(20, 25, 35)
+main.Size = UDim2.new(0, 300, 0, 340)
+main.Position = UDim2.new(0.5, -150, 0.3, -170)
+main.BackgroundColor3 = Color3.fromRGB(20, 30, 60)
 main.BorderSizePixel = 0
 main.Active = true
 main.Parent = gui
 
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 10)
-mainCorner.Parent = main
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = main
 
--- Manual drag system (works on ALL executors)
-local dragging = false
-local dragInput, mousePos, framePos
+-- Dragging
+local dragging, dragInput, dragStart, startPos
 
 main.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
-        mousePos = input.Position
-        framePos = main.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
+        dragStart = input.Position
+        startPos = main.Position
     end
 end)
 
-main.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
+main.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - mousePos
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
         main.Position = UDim2.new(
-            framePos.X.Scale,
-            framePos.X.Offset + delta.X,
-            framePos.Y.Scale,
-            framePos.Y.Offset + delta.Y
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
         )
     end
 end)
@@ -83,11 +66,11 @@ end)
 -- Title
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 40)
-title.BackgroundColor3 = Color3.fromRGB(30, 100, 200)
-title.Text = "Blues Universal Panel"
-title.TextColor3 = Color3.new(1, 1, 1)
+title.BackgroundColor3 = Color3.fromRGB(15, 25, 55)
+title.Text = "Blues Duel Panel"
+title.TextColor3 = Color3.fromRGB(100, 150, 255)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 18
+title.TextSize = 16
 title.BorderSizePixel = 0
 title.Parent = main
 
@@ -95,15 +78,15 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 10)
 titleCorner.Parent = title
 
--- Close button
+-- Close
 local close = Instance.new("TextButton")
-close.Size = UDim2.new(0, 30, 0, 30)
-close.Position = UDim2.new(1, -35, 0, 5)
-close.BackgroundColor3 = Color3.fromRGB(220, 50, 50)
+close.Size = UDim2.new(0, 28, 0, 28)
+close.Position = UDim2.new(1, -33, 0, 6)
+close.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 close.Text = "X"
 close.TextColor3 = Color3.new(1, 1, 1)
 close.Font = Enum.Font.GothamBold
-close.TextSize = 16
+close.TextSize = 14
 close.BorderSizePixel = 0
 close.Parent = main
 
@@ -115,55 +98,51 @@ close.MouseButton1Click:Connect(function()
     gui:Destroy()
 end)
 
--- Container for features
+-- Container
 local container = Instance.new("Frame")
-container.Size = UDim2.new(1, -20, 1, -60)
-container.Position = UDim2.new(0, 10, 0, 50)
+container.Size = UDim2.new(1, -16, 1, -55)
+container.Position = UDim2.new(0, 8, 0, 47)
 container.BackgroundTransparency = 1
 container.Parent = main
 
-local yOffset = 0
+local yPos = 0
 
--- Toggle button creator
-local function createToggle(labelText, callback)
-    local toggle = Instance.new("TextButton")
-    toggle.Size = UDim2.new(1, 0, 0, 35)
-    toggle.Position = UDim2.new(0, 0, 0, yOffset)
-    toggle.BackgroundColor3 = Color3.fromRGB(45, 50, 60)
-    toggle.Text = labelText .. ": OFF"
-    toggle.TextColor3 = Color3.new(1, 1, 1)
-    toggle.Font = Enum.Font.Gotham
-    toggle.TextSize = 14
-    toggle.BorderSizePixel = 0
-    toggle.Parent = container
+local function makeToggle(text, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 34)
+    btn.Position = UDim2.new(0, 0, 0, yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(40, 50, 80)
+    btn.Text = text .. ": OFF"
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 13
+    btn.BorderSizePixel = 0
+    btn.Parent = container
     
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(0, 6)
-    toggleCorner.Parent = toggle
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = btn
     
-    local enabled = false
-    
-    toggle.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        toggle.Text = labelText .. ": " .. (enabled and "ON" or "OFF")
-        toggle.BackgroundColor3 = enabled and Color3.fromRGB(50, 180, 120) or Color3.fromRGB(45, 50, 60)
-        callback(enabled)
+    local state = false
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        btn.Text = text .. ": " .. (state and "ON" or "OFF")
+        btn.BackgroundColor3 = state and Color3.fromRGB(50, 150, 100) or Color3.fromRGB(40, 50, 80)
+        callback(state)
     end)
     
-    yOffset = yOffset + 40
-    return toggle
+    yPos = yPos + 38
 end
 
--- Textbox creator
-local function createTextbox(labelText, defaultValue, callback)
+local function makeSlider(text, default, callback)
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.6, -5, 0, 35)
-    label.Position = UDim2.new(0, 0, 0, yOffset)
-    label.BackgroundColor3 = Color3.fromRGB(45, 50, 60)
-    label.Text = labelText
+    label.Size = UDim2.new(0.58, 0, 0, 34)
+    label.Position = UDim2.new(0, 0, 0, yPos)
+    label.BackgroundColor3 = Color3.fromRGB(40, 50, 80)
+    label.Text = text
     label.TextColor3 = Color3.new(1, 1, 1)
     label.Font = Enum.Font.Gotham
-    label.TextSize = 14
+    label.TextSize = 13
     label.BorderSizePixel = 0
     label.Parent = container
     
@@ -171,213 +150,141 @@ local function createTextbox(labelText, defaultValue, callback)
     labelCorner.CornerRadius = UDim.new(0, 6)
     labelCorner.Parent = label
     
-    local textbox = Instance.new("TextBox")
-    textbox.Size = UDim2.new(0.4, -5, 0, 35)
-    textbox.Position = UDim2.new(0.6, 5, 0, yOffset)
-    textbox.BackgroundColor3 = Color3.fromRGB(35, 40, 50)
-    textbox.Text = tostring(defaultValue)
-    textbox.TextColor3 = Color3.new(1, 1, 1)
-    textbox.Font = Enum.Font.Gotham
-    textbox.TextSize = 14
-    textbox.BorderSizePixel = 0
-    textbox.ClearTextOnFocus = false
-    textbox.Parent = container
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(0.38, 0, 0, 34)
+    box.Position = UDim2.new(0.62, 0, 0, yPos)
+    box.BackgroundColor3 = Color3.fromRGB(30, 40, 70)
+    box.Text = tostring(default)
+    box.TextColor3 = Color3.new(1, 1, 1)
+    box.Font = Enum.Font.Gotham
+    box.TextSize = 13
+    box.BorderSizePixel = 0
+    box.ClearTextOnFocus = false
+    box.Parent = container
     
-    local textboxCorner = Instance.new("UICorner")
-    textboxCorner.CornerRadius = UDim.new(0, 6)
-    textboxCorner.Parent = textbox
+    local boxCorner = Instance.new("UICorner")
+    boxCorner.CornerRadius = UDim.new(0, 6)
+    boxCorner.Parent = box
     
-    textbox.FocusLost:Connect(function()
-        local value = tonumber(textbox.Text)
-        if value then
-            callback(value)
-        else
-            textbox.Text = tostring(defaultValue)
-        end
+    box.FocusLost:Connect(function()
+        local val = tonumber(box.Text)
+        if val then callback(val) end
     end)
     
-    yOffset = yOffset + 40
+    yPos = yPos + 38
 end
 
--- ==================== FEATURES ====================
+-- FEATURES
 
--- Infinite Jump
-local infJumpEnabled = false
-createToggle("Infinite Jump", function(state)
-    infJumpEnabled = state
+-- Inf Jump (FIXED FOR DELTA - ground check)
+local infJump = false
+local lastJump = 0
+
+makeToggle("Infinite Jump", function(state)
+    infJump = state
 end)
 
+local function isGrounded()
+    -- Raycast downward to check if on ground
+    local ray = Ray.new(hrp.Position, Vector3.new(0, -4, 0))
+    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {char})
+    return hit ~= nil or hum:GetState() == Enum.HumanoidStateType.Landed
+end
+
 UserInputService.JumpRequest:Connect(function()
-    if infJumpEnabled and hum and hum.Parent then
-        hum:ChangeState(Enum.HumanoidStateType.Jumping)
+    if infJump and hum and hum.Parent then
+        local now = tick()
+        -- Only jump if grounded OR 0.5 seconds passed (prevents death)
+        if isGrounded() or (now - lastJump) > 0.5 then
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+            lastJump = now
+        end
     end
 end)
 
 -- WalkSpeed
-local walkSpeedValue = 120
-createTextbox("WalkSpeed", 120, function(value)
-    walkSpeedValue = value
+local speedVal = 120
+makeSlider("WalkSpeed", 120, function(val)
+    speedVal = val
 end)
 
-local walkSpeedConnection = RunService.Heartbeat:Connect(function()
+RunService.Heartbeat:Connect(function()
     if hum and hum.Parent then
-        hum.WalkSpeed = walkSpeedValue
+        hum.WalkSpeed = speedVal
     end
 end)
 
 -- JumpPower
-local jumpPowerValue = 80
-createTextbox("JumpPower", 80, function(value)
-    jumpPowerValue = value
+local jumpVal = 80
+makeSlider("JumpPower", 80, function(val)
+    jumpVal = val
 end)
 
-local jumpPowerConnection = RunService.Heartbeat:Connect(function()
+RunService.Heartbeat:Connect(function()
     if hum and hum.Parent then
-        hum.JumpPower = jumpPowerValue
+        hum.JumpPower = jumpVal
     end
 end)
 
--- Gentle Float
-local floatEnabled = false
+-- Float (reduced)
+local floating = false
 local floatTime = 0
 
-createToggle("Gentle Float", function(state)
-    floatEnabled = state
+makeToggle("Gentle Float", function(state)
+    floating = state
     floatTime = 0
 end)
 
-local floatConnection = RunService.Heartbeat:Connect(function(dt)
-    if floatEnabled and hrp and hrp.Parent then
+RunService.Heartbeat:Connect(function(dt)
+    if floating and hrp and hrp.Parent then
         floatTime = floatTime + dt
-        hrp.Velocity = Vector3.new(hrp.Velocity.X, math.sin(floatTime * 1.2) * 4, hrp.Velocity.Z)
+        hrp.Velocity = Vector3.new(hrp.Velocity.X, math.sin(floatTime * 1.5) * 2, hrp.Velocity.Z)
     end
 end)
 
--- Auto Grab (UNIVERSAL - no fireproximityprompt needed)
-local autoGrabEnabled = false
+-- Auto Grab
+local grabbing = false
 
-createToggle("Auto Grab", function(state)
-    autoGrabEnabled = state
+makeToggle("Auto Grab", function(state)
+    grabbing = state
 end)
 
-local autoGrabConnection = RunService.Heartbeat:Connect(function()
-    if autoGrabEnabled and hrp and hrp.Parent then
+RunService.Heartbeat:Connect(function()
+    if grabbing and hrp and hrp.Parent then
         for _, obj in pairs(workspace:GetDescendants()) do
             if obj:IsA("ProximityPrompt") and obj.Enabled then
                 local parent = obj.Parent
                 if parent and parent:IsA("BasePart") then
-                    local distance = (hrp.Position - parent.Position).Magnitude
-                    
-                    if distance <= obj.MaxActivationDistance then
-                        -- Method 1: Try fireproximityprompt if available
-                        local success1 = pcall(function()
-                            fireproximityprompt(obj, 0)
+                    local dist = (hrp.Position - parent.Position).Magnitude
+                    if dist <= obj.MaxActivationDistance then
+                        pcall(function()
+                            obj:InputHoldBegin()
+                            if obj.HoldDuration > 0 then
+                                task.wait(obj.HoldDuration)
+                            end
+                            obj:InputHoldEnd()
                         end)
-                        
-                        -- Method 2: Simulate key press (works on all executors)
-                        if not success1 then
-                            pcall(function()
-                                obj:InputHoldBegin()
-                                task.wait(obj.HoldDuration or 0)
-                                obj:InputHoldEnd()
-                            end)
-                        end
                     end
                 end
             end
         end
-        task.wait(0.2)
+        task.wait(0.3)
     end
 end)
 
 -- Anti Ragdoll
-local antiRagdollEnabled = false
+local antiRag = false
 
-createToggle("Anti Ragdoll", function(state)
-    antiRagdollEnabled = state
+makeToggle("Anti Ragdoll", function(state)
+    antiRag = state
 end)
 
-local antiRagdollConnection = hum.StateChanged:Connect(function(oldState, newState)
-    if antiRagdollEnabled then
-        if newState == Enum.HumanoidStateType.FallingDown or 
-           newState == Enum.HumanoidStateType.Ragdoll or
-           newState == Enum.HumanoidStateType.PlatformStanding then
+hum.StateChanged:Connect(function(old, new)
+    if antiRag then
+        if new == Enum.HumanoidStateType.FallingDown or 
+           new == Enum.HumanoidStateType.Ragdoll or
+           new == Enum.HumanoidStateType.PlatformStanding then
             hum:ChangeState(Enum.HumanoidStateType.Running)
         end
     end
-end)
-
--- Lagback Nearest Player
-local lagbackEnabled = false
-
-createToggle("Lagback Nearest", function(state)
-    lagbackEnabled = state
-end)
-
-local function getNearestPlayer()
-    if not hrp or not hrp.Parent then return nil end
-    
-    local nearestPlayer = nil
-    local shortestDistance = math.huge
-    
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= plr and player.Character then
-            local targetHRP = player.Character:FindFirstChild("HumanoidRootPart")
-            if targetHRP then
-                local distance = (hrp.Position - targetHRP.Position).Magnitude
-                if distance < shortestDistance then
-                    shortestDistance = distance
-                    nearestPlayer = player
-                end
-            end
-        end
-    end
-    
-    return nearestPlayer
-end
-
-local lagbackConnection = RunService.Heartbeat:Connect(function()
-    if lagbackEnabled then
-        local target = getNearestPlayer()
-        if target and target.Character then
-            local targetHRP = target.Character:FindFirstChild("HumanoidRootPart")
-            if targetHRP then
-                -- Universal lagback methods (work without network ownership)
-                pcall(function()
-                    targetHRP.Velocity = Vector3.new(
-                        math.random(-400, 400),
-                        math.random(-400, 400),
-                        math.random(-400, 400)
-                    )
-                end)
-                
-                pcall(function()
-                    targetHRP.AssemblyLinearVelocity = Vector3.new(
-                        math.random(-500, 500),
-                        math.random(-500, 500),
-                        math.random(-500, 500)
-                    )
-                end)
-                
-                pcall(function()
-                    local currentCFrame = targetHRP.CFrame
-                    targetHRP.CFrame = currentCFrame * CFrame.new(
-                        math.random(-2, 2),
-                        math.random(-2, 2),
-                        math.random(-2, 2)
-                    )
-                end)
-            end
-        end
-    end
-end)
-
--- Cleanup on GUI destroy
-gui.Destroying:Connect(function()
-    if walkSpeedConnection then walkSpeedConnection:Disconnect() end
-    if jumpPowerConnection then jumpPowerConnection:Disconnect() end
-    if floatConnection then floatConnection:Disconnect() end
-    if autoGrabConnection then autoGrabConnection:Disconnect() end
-    if antiRagdollConnection then antiRagdollConnection:Disconnect() end
-    if lagbackConnection then lagbackConnection:Disconnect() end
 end)
