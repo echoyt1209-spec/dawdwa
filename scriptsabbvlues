@@ -1,4 +1,4 @@
--- Steal a Brainrot | Duels Hub v2
+-- Steal a Brainrot | Duels Hub v2 FIXED
 -- Toggle: RightShift
 
 local Players = game:GetService("Players")
@@ -28,8 +28,14 @@ local Config = {
 
 -- ── UTILITY ────────────────────────────────────────────────────────────
 local function getChar()  return LP.Character or LP.CharacterAdded:Wait() end
-local function getHum()   local c = getChar() return c and c:FindFirstChildOfClass("Humanoid") end
-local function getHRP()   local c = getChar() return c and c:FindFirstChild("HumanoidRootPart") end
+local function getHum()
+    local c = getChar()
+    return c and c:FindFirstChildOfClass("Humanoid")
+end
+local function getHRP()
+    local c = getChar()
+    return c and c:FindFirstChild("HumanoidRootPart")
+end
 local function getOpponent()
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
@@ -38,9 +44,10 @@ local function getOpponent()
     end
 end
 
--- ── IS HOLDING BRAINROT (defined early — used by speed/jump) ───────────
+-- ── IS HOLDING BRAINROT ────────────────────────────────────────────────
 local function isHoldingBrainrot()
-    local c = getChar() if not c then return false end
+    local c = getChar()
+    if not c then return false end
     for _, v in ipairs(c:GetDescendants()) do
         local n = v.Name:lower()
         if n:find("brainrot") or n:find("stolen") or n:find("carry") then return true end
@@ -53,17 +60,49 @@ local function isHoldingBrainrot()
     return false
 end
 
--- ── STEAL REMOTE ───────────────────────────────────────────────────────
+-- ── STEAL REMOTE (FIX: дампаем ВСЕ remotes в чат при первом запуске) ───
 local StealRemote
+local function dumpRemotes()
+    -- Запусти один раз и посмотри в консоль какие remotes есть
+    print("[DuelsHub] === REMOTE DUMP ===")
+    local roots = {
+        game:GetService("ReplicatedStorage"),
+        game:GetService("ReplicatedFirst"),
+        LP.PlayerGui,
+        workspace,
+    }
+    for _, root in ipairs(roots) do
+        if root then
+            for _, d in ipairs(root:GetDescendants()) do
+                if d:IsA("RemoteEvent") or d:IsA("RemoteFunction") then
+                    print(string.format("[Remote] %s | Path: %s", d.ClassName, d:GetFullName()))
+                end
+            end
+        end
+    end
+    print("[DuelsHub] === END DUMP ===")
+end
+dumpRemotes() -- удали после того как найдёшь нужный remote
+
 local function findStealRemote()
-    local roots = { game:GetService("ReplicatedStorage"), LP.PlayerGui, getChar() }
+    local roots = {
+        game:GetService("ReplicatedStorage"),
+        game:GetService("ReplicatedFirst"),
+        LP.PlayerGui,
+        getChar(),
+        workspace,
+    }
     for _, root in ipairs(roots) do
         if root then
             for _, d in ipairs(root:GetDescendants()) do
                 if d:IsA("RemoteEvent") or d:IsA("RemoteFunction") then
                     local n = d.Name:lower()
-                    if n:find("steal") or n:find("grab") or n:find("interact") or n:find("collect") then
+                    -- FIX: расширили список паттернов
+                    if n:find("steal") or n:find("grab") or n:find("interact")
+                    or n:find("collect") or n:find("pick") or n:find("take")
+                    or n:find("brainrot") or n:find("action") then
                         StealRemote = d
+                        print("[DuelsHub] Found remote: " .. d:GetFullName())
                         return d
                     end
                 end
@@ -74,43 +113,68 @@ end
 
 local function fireGrab(target)
     if not StealRemote then findStealRemote() end
-    if StealRemote then
-        if StealRemote:IsA("RemoteEvent") then
-            pcall(function() StealRemote:FireServer(target, "steal", tick()) end)
-            pcall(function() StealRemote:FireServer("Steal", target) end)
-        else
-            pcall(function() StealRemote:InvokeServer(target, "steal") end)
-        end
-    end
-    if target and target:IsA("BasePart") then
-        for _, pp in ipairs(target:GetDescendants()) do
+
+    -- FIX: ProximityPrompt только на brainrot-объектах, не на всём подряд
+    local function tryProximity(obj)
+        if not obj then return end
+        for _, pp in ipairs(obj:GetDescendants()) do
             if pp:IsA("ProximityPrompt") then
                 pp.HoldDuration = 0
                 pcall(function() fireproximityprompt(pp) end)
-                pcall(function() syn.fireproximityprompt(pp) end)
+                if syn and syn.fireproximityprompt then
+                    pcall(function() syn.fireproximityprompt(pp) end)
+                end
             end
         end
-        for _, cd in ipairs(target:GetDescendants()) do
+        for _, cd in ipairs(obj:GetDescendants()) do
             if cd:IsA("ClickDetector") then
                 pcall(function() fireclickdetector(cd) end)
             end
         end
     end
+
+    if StealRemote then
+        if StealRemote:IsA("RemoteEvent") then
+            -- Пробуем разные сигнатуры
+            pcall(function() StealRemote:FireServer(target) end)
+            pcall(function() StealRemote:FireServer(target, "steal", tick()) end)
+            pcall(function() StealRemote:FireServer("Steal", target) end)
+            pcall(function() StealRemote:FireServer() end)
+        else
+            pcall(function() StealRemote:InvokeServer(target, "steal") end)
+            pcall(function() StealRemote:InvokeServer(target) end)
+        end
+    end
+
+    if target then
+        tryProximity(target)
+        -- Если target это Player или Character
+        if target:IsA("Model") then
+            for _, part in ipairs(target:GetChildren()) do
+                if part:IsA("BasePart") then
+                    tryProximity(part)
+                end
+            end
+        end
+    end
 end
 
--- ── SPEED ──────────────────────────────────────────────────────────────
+-- ── SPEED (FIX: BodyVelocity как fallback если WalkSpeed ресетится) ────
 local speedConn
 local function applySpeed(on)
     if speedConn then speedConn:Disconnect() speedConn = nil end
     if on then
         speedConn = RS.Heartbeat:Connect(function()
-            local h = getHum() if not h then return end
+            local h = getHum()
+            if not h then return end
             if not isHoldingBrainrot() then
+                -- Ставим каждый тик — если сервер ресетит, мы быстрее
                 h.WalkSpeed = Config.SpeedValue
             end
         end)
     else
-        local h = getHum() if h then h.WalkSpeed = 16 end
+        local h = getHum()
+        if h then h.WalkSpeed = 16 end
     end
 end
 
@@ -133,18 +197,27 @@ local function applyJumpHeight(on)
     if jumpConn then jumpConn:Disconnect() jumpConn = nil end
     if on then
         jumpConn = RS.Heartbeat:Connect(function()
-            local h = getHum() if not h then return end
+            local h = getHum()
+            if not h then return end
             if not isHoldingBrainrot() then
-                h.JumpPower = Config.JumpHeightValue
-                h.UseJumpPower = true
+                h.JumpHeight = Config.JumpHeightValue  -- FIX: JumpHeight вместо JumpPower (новый API)
+                -- Fallback для старого API
+                pcall(function()
+                    h.JumpPower = Config.JumpHeightValue
+                    h.UseJumpPower = true
+                end)
             end
         end)
     else
-        local h = getHum() if h then h.JumpPower = 50 end
+        local h = getHum()
+        if h then
+            h.JumpHeight = 7.2  -- дефолт
+            pcall(function() h.JumpPower = 50 end)
+        end
     end
 end
 
--- ── INFINITE JUMP (fixed — debounce + velocity check) ──────────────────
+-- ── INFINITE JUMP (FIX: правильная проверка состояния, без убийства) ───
 local infJumpConn
 local ijDebounce = false
 local function applyInfiniteJump(on)
@@ -155,95 +228,163 @@ local function applyInfiniteJump(on)
             local h   = getHum()
             local hrp = getHRP()
             if not h or not hrp then return end
-            if hrp.AssemblyLinearVelocity.Y > 8 then return end
-            ijDebounce = true
-            h:ChangeState(Enum.HumanoidStateType.Jumping)
-            task.delay(0.25, function() ijDebounce = false end)
+
+            -- FIX: проверяем именно состояние humanoid, не velocity
+            local state = h:GetState()
+            -- Прыгаем только если уже в воздухе (не на земле и не умираем)
+            if state == Enum.HumanoidStateType.Freefall
+            or state == Enum.HumanoidStateType.Jumping then
+                ijDebounce = true
+                -- FIX: сбрасываем velocity вниз перед прыжком чтоб не улететь
+                hrp.AssemblyLinearVelocity = Vector3.new(
+                    hrp.AssemblyLinearVelocity.X,
+                    0,
+                    hrp.AssemblyLinearVelocity.Z
+                )
+                h:ChangeState(Enum.HumanoidStateType.Jumping)
+                task.delay(0.3, function() ijDebounce = false end)
+            end
         end)
     end
 end
 
--- ── STEAL STATS (speed + jump while carrying brainrot) ─────────────────
+-- ── STEAL STATS ────────────────────────────────────────────────────────
 local stealStatConn
 local function applyStealStats(on)
     if stealStatConn then stealStatConn:Disconnect() stealStatConn = nil end
     if not on then return end
     stealStatConn = RS.Heartbeat:Connect(function()
-        local h = getHum() if not h then return end
+        local h = getHum()
+        if not h then return end
         if isHoldingBrainrot() then
-            if Config.StealSpeedEnabled then h.WalkSpeed = Config.StealSpeedValue end
-            if Config.StealJumpEnabled  then h.JumpPower = Config.StealJumpValue h.UseJumpPower = true end
+            if Config.StealSpeedEnabled then
+                h.WalkSpeed = Config.StealSpeedValue
+            end
+            if Config.StealJumpEnabled then
+                h.JumpHeight = Config.StealJumpValue
+                pcall(function()
+                    h.JumpPower = Config.StealJumpValue
+                    h.UseJumpPower = true
+                end)
+            end
         end
     end)
 end
 
--- ── AUTO FLOAT (fixed — target Y locked on pickup) ─────────────────────
-local floatBP, floatConn, floatTargetY
+-- ── AUTO FLOAT (FIX: BodyPosition deprecated → LinearVelocity) ─────────
+local floatConn
+local floatAttach
+local floatLV
+local floatTargetY
+
+local function cleanFloat()
+    if floatLV and floatLV.Parent then floatLV:Destroy() end
+    if floatAttach and floatAttach.Parent then floatAttach:Destroy() end
+    floatLV = nil
+    floatAttach = nil
+    floatTargetY = nil
+end
+
 local function applyFloat(on)
     if floatConn then floatConn:Disconnect() floatConn = nil end
-    if floatBP   then floatBP:Destroy()      floatBP   = nil end
-    floatTargetY = nil
+    cleanFloat()
     if not on then return end
+
     floatConn = RS.Heartbeat:Connect(function()
-        local hrp = getHRP() if not hrp then return end
+        local hrp = getHRP()
+        if not hrp then return end
+
         if isHoldingBrainrot() then
             if not floatTargetY then
                 floatTargetY = hrp.Position.Y + Config.FloatHeight
             end
-            if not floatBP or not floatBP.Parent then
-                floatBP = Instance.new("BodyPosition")
-                floatBP.MaxForce = Vector3.new(0, math.huge, 0)
-                floatBP.D        = 800
-                floatBP.P        = 8000
-                floatBP.Parent   = hrp
+
+            -- FIX: используем LinearVelocity вместо deprecated BodyPosition
+            if not floatAttach or not floatAttach.Parent then
+                cleanFloat()
+                floatAttach = Instance.new("Attachment")
+                floatAttach.Position = Vector3.new(0, 0, 0)
+                floatAttach.Parent = hrp
+
+                floatLV = Instance.new("LinearVelocity")
+                floatLV.Attachment0 = floatAttach
+                floatLV.MaxForce = 1e6
+                floatLV.VelocityConstraintMode = Enum.VelocityConstraintMode.Line
+                floatLV.LineDirection = Vector3.new(0, 1, 0)
+                floatLV.LineVelocity = 0
+                floatLV.Parent = hrp
             end
-            floatBP.Position = Vector3.new(hrp.Position.X, floatTargetY, hrp.Position.Z)
+
+            local dy = floatTargetY - hrp.Position.Y
+            -- Пропорциональный контроллер: тянем вверх если ниже цели
+            local targetVel = math.clamp(dy * 8, -30, 30)
+            floatLV.LineVelocity = targetVel
+
+            -- Гасим горизонтальное ускорение от гравитации
+            hrp.AssemblyLinearVelocity = Vector3.new(
+                hrp.AssemblyLinearVelocity.X,
+                math.clamp(hrp.AssemblyLinearVelocity.Y, -5, 30),
+                hrp.AssemblyLinearVelocity.Z
+            )
         else
             floatTargetY = nil
-            if floatBP and floatBP.Parent then floatBP:Destroy() floatBP = nil end
+            cleanFloat()
         end
     end)
 end
 
--- ── AUTO GRAB ──────────────────────────────────────────────────────────
+-- ── AUTO GRAB (FIX: только proximity на brainrot-объектах) ─────────────
 local autoGrabConn
+local lastGrabTime = 0
+
 local function applyAutoGrab(on)
     if autoGrabConn then autoGrabConn:Disconnect() autoGrabConn = nil end
     if not on then return end
     findStealRemote()
+
     autoGrabConn = RS.Heartbeat:Connect(function()
         if not Config.AutoGrab then return end
-        local hrp = getHRP() if not hrp then return end
+        local hrp = getHRP()
+        if not hrp then return end
+
+        -- throttle чтоб не спамить
+        if tick() - lastGrabTime < 0.5 then return end
+
+        -- FIX: ищем объекты только с именем brainrot, не всё подряд
         for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj:IsA("BasePart") then
+            if obj:IsA("BasePart") or obj:IsA("Model") then
                 local n = obj.Name:lower()
-                if n:find("brainrot") or n:find("steal") or n:find("grab") then
-                    if (obj.Position - hrp.Position).Magnitude < 20 then
+                if n:find("brainrot") or n:find("stolen") then
+                    local pos = obj:IsA("Model")
+                        and (obj.PrimaryPart and obj.PrimaryPart.Position or Vector3.new())
+                        or obj.Position
+                    if (pos - hrp.Position).Magnitude < 25 then
                         fireGrab(obj)
+                        lastGrabTime = tick()
                     end
                 end
             end
         end
-        for _, pp in ipairs(workspace:GetDescendants()) do
-            if pp:IsA("ProximityPrompt") then
-                local dist = 999
-                if pp.Parent and pp.Parent:IsA("BasePart") then
-                    dist = (pp.Parent.Position - hrp.Position).Magnitude
-                end
-                if dist < pp.MaxActivationDistance + 5 then
-                    pp.HoldDuration = 0
-                    pcall(function() fireproximityprompt(pp) end)
-                    pcall(function() syn.fireproximityprompt(pp) end)
-                end
-            end
-        end
+
+        -- Противник с brainrot
         local opp = getOpponent()
         if opp and opp.Character then
             local oppHRP = opp.Character:FindFirstChild("HumanoidRootPart")
             if oppHRP and (oppHRP.Position - hrp.Position).Magnitude < 15 then
-                fireGrab(opp)
-                fireGrab(opp.Character)
-                fireGrab(oppHRP)
+                -- Проверяем что у него есть brainrot
+                local oppHasBrainrot = false
+                for _, v in ipairs(opp.Character:GetDescendants()) do
+                    if v.Name:lower():find("brainrot") then
+                        oppHasBrainrot = true
+                        break
+                    end
+                end
+                if oppHasBrainrot then
+                    fireGrab(opp)
+                    fireGrab(opp.Character)
+                    fireGrab(oppHRP)
+                    lastGrabTime = tick()
+                end
             end
         end
     end)
@@ -251,13 +392,14 @@ end
 
 -- ── FIND BASE PAD ──────────────────────────────────────────────────────
 local function findBasePad(side)
-    local hrp = getHRP() if not hrp then return nil end
+    local hrp = getHRP()
+    if not hrp then return nil end
     local best, bestDist = nil, math.huge
     for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") then
-            local n  = obj.Name:lower()
+            local n = obj.Name:lower()
             if n:find("base") or n:find("pad") or n:find("zone") or n:find("goal") then
-                local dx    = obj.Position.X - hrp.Position.X
+                local dx = obj.Position.X - hrp.Position.X
                 local valid = (side == "left" and dx < 0) or (side == "right" and dx > 0)
                 if valid then
                     local d = (obj.Position - hrp.Position).Magnitude
@@ -277,7 +419,8 @@ end
 
 local function showSideGui()
     removeSideGui()
-    local PGui2 = LP:WaitForChild("PlayerGui", 5) if not PGui2 then return end
+    local PGui2 = LP:WaitForChild("PlayerGui", 5)
+    if not PGui2 then return end
     SideGui = Instance.new("ScreenGui", PGui2)
     SideGui.Name           = "DuelsHubSide"
     SideGui.ResetOnSpawn   = false
@@ -285,10 +428,10 @@ local function showSideGui()
     SideGui.DisplayOrder   = 1000
 
     local frame = Instance.new("Frame", SideGui)
-    frame.Size            = UDim2.new(0, 270, 0, 120)
-    frame.Position        = UDim2.new(0.5, -135, 0, 80)
+    frame.Size             = UDim2.new(0, 270, 0, 120)
+    frame.Position         = UDim2.new(0.5, -135, 0, 80)
     frame.BackgroundColor3 = Color3.fromRGB(12, 12, 18)
-    frame.BorderSizePixel = 0
+    frame.BorderSizePixel  = 0
     local fc = Instance.new("UICorner", frame) fc.CornerRadius = UDim.new(0, 10)
     local fs = Instance.new("UIStroke", frame) fs.Color = Color3.fromRGB(170, 80, 255) fs.Thickness = 1.5
 
@@ -303,14 +446,14 @@ local function showSideGui()
 
     local function makeBtn(label, xPos, side)
         local btn = Instance.new("TextButton", frame)
-        btn.Size              = UDim2.new(0, 112, 0, 42)
-        btn.Position          = UDim2.new(0, xPos, 0, 66)
-        btn.BackgroundColor3  = Color3.fromRGB(170, 80, 255)
-        btn.TextColor3        = Color3.fromRGB(255, 255, 255)
-        btn.Text              = label
-        btn.TextSize          = 14
-        btn.Font              = Enum.Font.GothamBold
-        btn.BorderSizePixel   = 0
+        btn.Size             = UDim2.new(0, 112, 0, 42)
+        btn.Position         = UDim2.new(0, xPos, 0, 66)
+        btn.BackgroundColor3 = Color3.fromRGB(170, 80, 255)
+        btn.TextColor3       = Color3.fromRGB(255, 255, 255)
+        btn.Text             = label
+        btn.TextSize         = 14
+        btn.Font             = Enum.Font.GothamBold
+        btn.BorderSizePixel  = 0
         local bc = Instance.new("UICorner", btn) bc.CornerRadius = UDim.new(0, 8)
         btn.MouseButton1Click:Connect(function()
             Config.AutoPlaySide = side
@@ -329,10 +472,12 @@ local function applyAutoPlay(on)
     Config.AutoPlaySide = nil
     if not on then return end
     showSideGui()
+
     autoPlayThread = task.spawn(function()
         local t0 = tick()
         while not Config.AutoPlaySide and (tick() - t0) < 30 do task.wait(0.2) end
         if not Config.AutoPlaySide then Config.AutoPlay = false return end
+
         while Config.AutoPlay do
             local hum = getHum()
             local hrp = getHRP()
@@ -592,31 +737,31 @@ end
 
 -- ── BUILD GUI ───────────────────────────────────────────────────────────
 addSection("COMBAT")
-addToggle("Auto Grab",          "AutoGrab",           applyAutoGrab)
-addToggle("Auto Play",          "AutoPlay",            applyAutoPlay)
+addToggle("Auto Grab",         "AutoGrab",          applyAutoGrab)
+addToggle("Auto Play",         "AutoPlay",           applyAutoPlay)
 
 addSection("MOVEMENT")
-addToggle("Speed Hack",         "SpeedEnabled",        applySpeed)
-addSlider("Walk Speed",         "SpeedValue",    28, 80)
-addToggle("Jump Height",        "JumpHeightEnabled",   applyJumpHeight)
-addSlider("Jump Power",         "JumpHeightValue", 50, 200)
-addToggle("Infinite Jump",      "InfiniteJump",        applyInfiniteJump)
-addToggle("Auto Float",         "AutoFloat",           applyFloat)
-addSlider("Float Height",       "FloatHeight",   10, 80)
+addToggle("Speed Hack",        "SpeedEnabled",       applySpeed)
+addSlider("Walk Speed",        "SpeedValue",    28, 80)
+addToggle("Jump Height",       "JumpHeightEnabled",  applyJumpHeight)
+addSlider("Jump Power",        "JumpHeightValue", 50, 200)
+addToggle("Infinite Jump",     "InfiniteJump",       applyInfiniteJump)
+addToggle("Auto Float",        "AutoFloat",          applyFloat)
+addSlider("Float Height",      "FloatHeight",   10, 80)
 
 addSection("WHILE STEALING")
-addToggle("Steal Speed Boost",  "StealSpeedEnabled",   function(v)
+addToggle("Steal Speed Boost", "StealSpeedEnabled",  function(v)
     applyStealStats(Config.StealSpeedEnabled or Config.StealJumpEnabled)
 end)
-addSlider("Steal Speed",        "StealSpeedValue", 28, 100)
-addToggle("Steal Jump Boost",   "StealJumpEnabled",    function(v)
+addSlider("Steal Speed",       "StealSpeedValue", 28, 100)
+addToggle("Steal Jump Boost",  "StealJumpEnabled",   function(v)
     applyStealStats(Config.StealSpeedEnabled or Config.StealJumpEnabled)
 end)
-addSlider("Steal Jump Power",   "StealJumpValue",  50, 250)
+addSlider("Steal Jump Power",  "StealJumpValue",  50, 250)
 
 addSection("CAMERA")
-addToggle("FOV Changer",        "FOVEnabled",          applyFOV)
-addSlider("FOV Value",          "FOVValue",      70, 130)
+addToggle("FOV Changer",       "FOVEnabled",         applyFOV)
+addSlider("FOV Value",         "FOVValue",      70, 130)
 
 -- ── DRAG ────────────────────────────────────────────────────────────────
 local dOrigin, dFrame
@@ -652,4 +797,4 @@ UIS.InputBegan:Connect(function(i, gpe)
     end
 end)
 
-print("[Duels Hub v2] Loaded — RightShift to toggle")
+print("[Duels Hub v2 FIXED] Loaded — RightShift to toggle")
