@@ -1,51 +1,48 @@
--- Steal a Brainrot | Duels Exploit Hub
--- Fixed: GUI parent chain, slider drag, executor compat
+-- Steal a Brainrot | Duels Hub
+-- FIXED: GUI now parents to PlayerGui — actually renders
 -- Toggle: RightShift
 
-local Players = game:GetService("Players")
-local UIS = game:GetService("UserInputService")
-local RS = game:GetService("RunService")
-local LP = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
+local Players    = game:GetService("Players")
+local UIS        = game:GetService("UserInputService")
+local RS         = game:GetService("RunService")
+local LP         = Players.LocalPlayer
+local Camera     = workspace.CurrentCamera
 
 local Config = {
-    AutoGrab        = false,
-    SpeedEnabled    = false,
-    SpeedValue      = 24,
-    FOVEnabled      = false,
-    FOVValue        = 100,
+    AutoGrab          = false,
+    SpeedEnabled      = false,
+    SpeedValue        = 24,
+    FOVEnabled        = false,
+    FOVValue          = 100,
     JumpHeightEnabled = false,
-    JumpHeightValue = 60,
-    InfiniteJump    = false,
-    AutoFloat       = false,
-    FloatHeight     = 25,
-    AutoPlay        = false,
+    JumpHeightValue   = 60,
+    InfiniteJump      = false,
+    AutoFloat         = false,
+    FloatHeight       = 25,
+    AutoPlay          = false,
 }
 
--- ── UTILITY ────────────────────────────────────────────
-local function getChar()      return LP.Character or LP.CharacterAdded:Wait() end
-local function getHumanoid()  local c=getChar() return c and c:FindFirstChildOfClass("Humanoid") end
-local function getHRP()       local c=getChar() return c and c:FindFirstChild("HumanoidRootPart") end
-
+-- ── UTILITY ────────────────────────────────────────────────────────────
+local function getChar()     return LP.Character or LP.CharacterAdded:Wait() end
+local function getHum()      local c=getChar() return c and c:FindFirstChildOfClass("Humanoid") end
+local function getHRP()      local c=getChar() return c and c:FindFirstChild("HumanoidRootPart") end
 local function getOpponent()
     for _,p in ipairs(Players:GetPlayers()) do
-        if p~=LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            return p
-        end
+        if p~=LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then return p end
     end
 end
 
--- ── STEAL REMOTE ───────────────────────────────────────
+-- ── STEAL REMOTE ───────────────────────────────────────────────────────
 local StealRemote
 local function findStealRemote()
-    local roots = { game:GetService("ReplicatedStorage"), LP.PlayerGui, getChar() }
+    local roots={game:GetService("ReplicatedStorage"),LP.PlayerGui,getChar()}
     for _,root in ipairs(roots) do
         if root then
             for _,d in ipairs(root:GetDescendants()) do
                 if d:IsA("RemoteEvent") or d:IsA("RemoteFunction") then
-                    local n = d.Name:lower()
+                    local n=d.Name:lower()
                     if n:find("steal") or n:find("grab") or n:find("interact") or n:find("collect") then
-                        StealRemote = d; return d
+                        StealRemote=d return d
                     end
                 end
             end
@@ -57,112 +54,102 @@ local function fireGrab(target)
     if not StealRemote then findStealRemote() end
     if not StealRemote then return end
     if StealRemote:IsA("RemoteEvent") then
-        pcall(function() StealRemote:FireServer(target, "steal", tick()) end)
-        pcall(function() StealRemote:FireServer("Steal", target) end)
-    elseif StealRemote:IsA("RemoteFunction") then
-        pcall(function() StealRemote:InvokeServer(target, "steal") end)
+        pcall(function() StealRemote:FireServer(target,"steal",tick()) end)
+        pcall(function() StealRemote:FireServer("Steal",target) end)
+    else
+        pcall(function() StealRemote:InvokeServer(target,"steal") end)
     end
 end
 
--- ── SPEED ──────────────────────────────────────────────
+-- ── SPEED ──────────────────────────────────────────────────────────────
 local speedConn
 local function applySpeed(on)
-    if speedConn then speedConn:Disconnect(); speedConn=nil end
+    if speedConn then speedConn:Disconnect() speedConn=nil end
     if on then
-        speedConn = RS.Heartbeat:Connect(function()
-            local h=getHumanoid(); if h then h.WalkSpeed=Config.SpeedValue end
+        speedConn=RS.Heartbeat:Connect(function()
+            local h=getHum() if h then h.WalkSpeed=Config.SpeedValue end
         end)
-    else
-        local h=getHumanoid(); if h then h.WalkSpeed=16 end
-    end
+    else local h=getHum() if h then h.WalkSpeed=16 end end
 end
 
--- ── FOV ────────────────────────────────────────────────
+-- ── FOV ────────────────────────────────────────────────────────────────
 local fovConn
 local function applyFOV(on)
-    if fovConn then fovConn:Disconnect(); fovConn=nil end
+    if fovConn then fovConn:Disconnect() fovConn=nil end
     if on then
-        fovConn = RS.Heartbeat:Connect(function()
-            Camera.FieldOfView = Config.FOVValue
-        end)
-    else Camera.FieldOfView = 70 end
+        fovConn=RS.Heartbeat:Connect(function() Camera.FieldOfView=Config.FOVValue end)
+    else Camera.FieldOfView=70 end
 end
 
--- ── JUMP HEIGHT ────────────────────────────────────────
+-- ── JUMP HEIGHT ────────────────────────────────────────────────────────
 local jumpConn
 local function applyJumpHeight(on)
-    if jumpConn then jumpConn:Disconnect(); jumpConn=nil end
+    if jumpConn then jumpConn:Disconnect() jumpConn=nil end
     if on then
-        jumpConn = RS.Heartbeat:Connect(function()
-            local h=getHumanoid()
-            if h then h.JumpPower=Config.JumpHeightValue; h.UseJumpPower=true end
+        jumpConn=RS.Heartbeat:Connect(function()
+            local h=getHum()
+            if h then h.JumpPower=Config.JumpHeightValue h.UseJumpPower=true end
         end)
-    else
-        local h=getHumanoid(); if h then h.JumpPower=50 end
-    end
+    else local h=getHum() if h then h.JumpPower=50 end end
 end
 
--- ── INFINITE JUMP ──────────────────────────────────────
+-- ── INFINITE JUMP ──────────────────────────────────────────────────────
 local infJumpConn
 local function applyInfiniteJump(on)
-    if infJumpConn then infJumpConn:Disconnect(); infJumpConn=nil end
+    if infJumpConn then infJumpConn:Disconnect() infJumpConn=nil end
     if on then
-        infJumpConn = UIS.JumpRequest:Connect(function()
-            local h=getHumanoid()
-            if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end
+        infJumpConn=UIS.JumpRequest:Connect(function()
+            local h=getHum() if h then h:ChangeState(Enum.HumanoidStateType.Jumping) end
         end)
     end
 end
 
--- ── AUTO FLOAT ─────────────────────────────────────────
-local floatBP, floatConn
+-- ── AUTO FLOAT ─────────────────────────────────────────────────────────
+local floatBP,floatConn
 local function isHoldingBrainrot()
-    local c=getChar(); if not c then return false end
+    local c=getChar() if not c then return false end
     for _,v in ipairs(c:GetDescendants()) do
         local n=v.Name:lower()
-        if n:find("brainrot") or n:find("stolen") or n:find("carry") or n:find("holding") then return true end
+        if n:find("brainrot") or n:find("stolen") or n:find("carry") then return true end
     end
     local t=c:FindFirstChildOfClass("Tool")
-    if t then local n=t.Name:lower(); if n:find("brainrot") or n:find("steal") then return true end end
+    if t then local n=t.Name:lower() if n:find("brainrot") or n:find("steal") then return true end end
     return false
 end
-
 local function applyFloat(on)
-    if floatConn then floatConn:Disconnect(); floatConn=nil end
-    if floatBP then floatBP:Destroy(); floatBP=nil end
+    if floatConn then floatConn:Disconnect() floatConn=nil end
+    if floatBP then floatBP:Destroy() floatBP=nil end
     if not on then return end
-    floatConn = RS.Heartbeat:Connect(function()
-        local hrp=getHRP(); if not hrp then return end
+    floatConn=RS.Heartbeat:Connect(function()
+        local hrp=getHRP() if not hrp then return end
         if isHoldingBrainrot() then
             if not floatBP or not floatBP.Parent then
                 floatBP=Instance.new("BodyPosition")
                 floatBP.MaxForce=Vector3.new(0,math.huge,0)
-                floatBP.D=1000; floatBP.P=10000; floatBP.Parent=hrp
+                floatBP.D=1000 floatBP.P=10000 floatBP.Parent=hrp
             end
             local p=hrp.Position
-            floatBP.Position=Vector3.new(p.X, p.Y+Config.FloatHeight, p.Z)
+            floatBP.Position=Vector3.new(p.X,p.Y+Config.FloatHeight,p.Z)
         else
-            if floatBP and floatBP.Parent then floatBP:Destroy(); floatBP=nil end
+            if floatBP and floatBP.Parent then floatBP:Destroy() floatBP=nil end
         end
     end)
 end
 
--- ── AUTO GRAB LOOP ─────────────────────────────────────
+-- ── AUTO GRAB ──────────────────────────────────────────────────────────
 local autoGrabConn
 local function applyAutoGrab(on)
-    if autoGrabConn then autoGrabConn:Disconnect(); autoGrabConn=nil end
+    if autoGrabConn then autoGrabConn:Disconnect() autoGrabConn=nil end
     if not on then return end
     findStealRemote()
-    autoGrabConn = RS.Heartbeat:Connect(function()
+    autoGrabConn=RS.Heartbeat:Connect(function()
         if not Config.AutoGrab then return end
-        local hrp=getHRP(); if not hrp then return end
+        local hrp=getHRP() if not hrp then return end
         for _,obj in ipairs(workspace:GetDescendants()) do
             if obj:IsA("BasePart") then
                 local n=obj.Name:lower()
-                if (n:find("brainrot") or n:find("steal") or n:find("grab")) then
-                    if (obj.Position-hrp.Position).Magnitude < 15 then
-                        fireGrab(obj)
-                    end
+                if n:find("brainrot") or n:find("steal") or n:find("grab") then
+                    if (obj.Position-hrp.Position).Magnitude<15 then fireGrab(obj) end
                 end
             end
         end
@@ -172,7 +159,7 @@ local function applyAutoGrab(on)
                 if pp.Parent and pp.Parent:IsA("BasePart") then
                     dist=(pp.Parent.Position-hrp.Position).Magnitude
                 end
-                if dist < pp.MaxActivationDistance+5 then
+                if dist<pp.MaxActivationDistance+5 then
                     pp.HoldDuration=0
                     pcall(function() fireproximityprompt(pp) end)
                 end
@@ -181,27 +168,26 @@ local function applyAutoGrab(on)
     end)
 end
 
--- ── AUTO PLAY ──────────────────────────────────────────
+-- ── AUTO PLAY ──────────────────────────────────────────────────────────
 local autoPlayThread
 local function applyAutoPlay(on)
-    if autoPlayThread then task.cancel(autoPlayThread); autoPlayThread=nil end
+    if autoPlayThread then task.cancel(autoPlayThread) autoPlayThread=nil end
     if not on then return end
-    autoPlayThread = task.spawn(function()
+    autoPlayThread=task.spawn(function()
         while Config.AutoPlay do
-            local hum=getHumanoid(); local hrp=getHRP()
+            local hum=getHum() local hrp=getHRP()
             if hum and hrp then
                 local opp=getOpponent()
                 if opp and opp.Character and opp.Character:FindFirstChild("HumanoidRootPart") then
-                    local tgt=opp.Character.HumanoidRootPart.Position
-                    hum:MoveTo(tgt); hum.MoveToFinished:Wait()
-                    task.wait(0.1)
-                    fireGrab(opp); task.wait(0.3)
+                    hum:MoveTo(opp.Character.HumanoidRootPart.Position)
+                    hum.MoveToFinished:Wait()
+                    task.wait(0.1) fireGrab(opp) task.wait(0.3)
                     if isHoldingBrainrot() then
                         for _,obj in ipairs(workspace:GetDescendants()) do
                             if obj:IsA("BasePart") then
                                 local n=obj.Name:lower()
                                 if (n:find("base") or n:find("pad")) and (obj.Position-hrp.Position).Magnitude<200 then
-                                    hum:MoveTo(obj.Position); hum.MoveToFinished:Wait(); break
+                                    hum:MoveTo(obj.Position) hum.MoveToFinished:Wait() break
                                 end
                             end
                         end
@@ -213,293 +199,290 @@ local function applyAutoPlay(on)
     end)
 end
 
--- ══════════════════════════════════════════════════════
---  GUI  (FIXED parent chain — works on Delta/Solara/Fluxus/Wave)
--- ══════════════════════════════════════════════════════
+-- ════════════════════════════════════════════════════════════════════════
+--  GUI  —  parented to PlayerGui (THE fix — this is why it wasn't showing)
+-- ════════════════════════════════════════════════════════════════════════
+
+-- Wait for PlayerGui to exist (important on fast-execute)
+local PGui = LP:WaitForChild("PlayerGui", 10)
+if not PGui then warn("[DuelsHub] PlayerGui not found") return end
+
+-- Destroy any old instance so re-executing doesn't stack GUIs
+local old = PGui:FindFirstChild("DuelsHub")
+if old then old:Destroy() end
+
 local sg = Instance.new("ScreenGui")
-sg.Name = "DuelsHub"
-sg.ResetOnSpawn = false
-sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-sg.IgnoreGuiInset = true
+sg.Name            = "DuelsHub"
+sg.ResetOnSpawn    = false
+sg.ZIndexBehavior  = Enum.ZIndexBehavior.Sibling
+sg.IgnoreGuiInset  = true
+sg.DisplayOrder    = 999
+sg.Parent          = PGui   -- ← THE ONLY CORRECT PLACE
 
--- ── SAFE PARENT (the part that was broken) ─────────────
-local function safeParent(gui)
-    -- Priority: gethui > syn.protect_gui+CoreGui > PlayerGui
-    if gethui then
-        gui.Parent = gethui()
-    elseif syn and syn.protect_gui then
-        syn.protect_gui(gui)
-        gui.Parent = game:GetService("CoreGui")
-    else
-        pcall(function() gui.Parent = game:GetService("CoreGui") end)
-        if not gui.Parent or gui.Parent ~= game:GetService("CoreGui") then
-            gui.Parent = LP.PlayerGui   -- last resort, still visible
-        end
-    end
-end
-pcall(safeParent, sg)
-if not sg.Parent then sg.Parent = LP.PlayerGui end  -- absolute fallback
+-- ── THEME ──────────────────────────────────────────────────────────────
+local BG      = Color3.fromRGB(12, 12, 18)
+local SURFACE = Color3.fromRGB(22, 22, 32)
+local ACCENT  = Color3.fromRGB(170, 80, 255)
+local ON_COL  = Color3.fromRGB(70, 255, 130)
+local OFF_COL = Color3.fromRGB(255, 65, 65)
+local TEXT    = Color3.fromRGB(225, 225, 240)
+local DIM     = Color3.fromRGB(130, 130, 155)
 
--- ── THEME ──────────────────────────────────────────────
-local BG      = Color3.fromRGB(14, 14, 20)
-local SURFACE = Color3.fromRGB(24, 24, 36)
-local ACCENT  = Color3.fromRGB(180, 90, 255)
-local ON_COL  = Color3.fromRGB(80, 255, 140)
-local OFF_COL = Color3.fromRGB(255, 75, 75)
-local TEXT    = Color3.fromRGB(220, 220, 235)
-local SUBTEXT = Color3.fromRGB(140, 140, 160)
+local function mkCorner(p,r) local c=Instance.new("UICorner",p) c.CornerRadius=UDim.new(0,r or 8) end
+local function mkStroke(p,col,t) local s=Instance.new("UIStroke",p) s.Color=col s.Thickness=t or 1 end
 
-local function corner(p, r) local c=Instance.new("UICorner",p); c.CornerRadius=UDim.new(0,r or 8) end
-local function stroke(p, c, t) local s=Instance.new("UIStroke",p); s.Color=c; s.Thickness=t or 1 end
-
--- ── MAIN FRAME ─────────────────────────────────────────
-local Main = Instance.new("Frame", sg)
-Main.Name = "Main"
-Main.Size = UDim2.new(0, 300, 0, 480)
-Main.Position = UDim2.new(0, 24, 0.5, -240)
-Main.BackgroundColor3 = BG
-Main.BorderSizePixel = 0
-Main.Visible = false
-corner(Main, 12)
-stroke(Main, ACCENT, 1.5)
+-- ── MAIN FRAME ─────────────────────────────────────────────────────────
+local Main=Instance.new("Frame",sg)
+Main.Name="Main"
+Main.Size=UDim2.new(0,295,0,470)
+Main.Position=UDim2.new(0,20,0.5,-235)
+Main.BackgroundColor3=BG
+Main.BorderSizePixel=0
+Main.Visible=false
+mkCorner(Main,12)
+mkStroke(Main,ACCENT,1.5)
 
 -- Title bar
-local TitleBar = Instance.new("Frame", Main)
-TitleBar.Size = UDim2.new(1, 0, 0, 44)
-TitleBar.BackgroundColor3 = SURFACE
-TitleBar.BorderSizePixel = 0
-corner(TitleBar, 12)
+local TBar=Instance.new("Frame",Main)
+TBar.Size=UDim2.new(1,0,0,46)
+TBar.BackgroundColor3=SURFACE
+TBar.BorderSizePixel=0
+mkCorner(TBar,12)
 
-local TitleLbl = Instance.new("TextLabel", TitleBar)
-TitleLbl.Size = UDim2.new(1, -12, 1, 0)
-TitleLbl.Position = UDim2.new(0, 12, 0, 0)
-TitleLbl.BackgroundTransparency = 1
-TitleLbl.Text = "DUELS HUB  |  SAB"
-TitleLbl.TextColor3 = ACCENT
-TitleLbl.TextSize = 16
-TitleLbl.Font = Enum.Font.GothamBold
-TitleLbl.TextXAlignment = Enum.TextXAlignment.Left
+Instance.new("Frame",TBar).Size=UDim2.new(1,0,0.5,0)  -- bottom half square
+TBar:FindFirstChildOfClass("Frame").BackgroundColor3=SURFACE
+TBar:FindFirstChildOfClass("Frame").BorderSizePixel=0
+TBar:FindFirstChildOfClass("Frame").Position=UDim2.new(0,0,0.5,0)
 
-local SubLbl = Instance.new("TextLabel", TitleBar)
-SubLbl.Size = UDim2.new(1, -12, 0, 14)
-SubLbl.Position = UDim2.new(0, 12, 1, -16)
-SubLbl.BackgroundTransparency = 1
-SubLbl.Text = "RightShift to hide"
-SubLbl.TextColor3 = SUBTEXT
-SubLbl.TextSize = 11
-SubLbl.Font = Enum.Font.Gotham
-SubLbl.TextXAlignment = Enum.TextXAlignment.Left
+local T1=Instance.new("TextLabel",TBar)
+T1.Size=UDim2.new(1,-12,0,24)
+T1.Position=UDim2.new(0,14,0,4)
+T1.BackgroundTransparency=1
+T1.Text="DUELS HUB"
+T1.TextColor3=ACCENT
+T1.TextSize=15
+T1.Font=Enum.Font.GothamBold
+T1.TextXAlignment=Enum.TextXAlignment.Left
 
--- Scroll container for controls
-local Scroll = Instance.new("ScrollingFrame", Main)
-Scroll.Size = UDim2.new(1, 0, 1, -52)
-Scroll.Position = UDim2.new(0, 0, 0, 50)
-Scroll.BackgroundTransparency = 1
-Scroll.BorderSizePixel = 0
-Scroll.ScrollBarThickness = 3
-Scroll.ScrollBarImageColor3 = ACCENT
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 0)  -- auto-set below
-Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+local T2=Instance.new("TextLabel",TBar)
+T2.Size=UDim2.new(1,-12,0,14)
+T2.Position=UDim2.new(0,14,0,26)
+T2.BackgroundTransparency=1
+T2.Text="Steal a Brainrot  •  RightShift to hide"
+T2.TextColor3=DIM
+T2.TextSize=10
+T2.Font=Enum.Font.Gotham
+T2.TextXAlignment=Enum.TextXAlignment.Left
 
-local List = Instance.new("UIListLayout", Scroll)
-List.Padding = UDim.new(0, 6)
-List.HorizontalAlignment = Enum.HorizontalAlignment.Center
+-- Scroll
+local Scroll=Instance.new("ScrollingFrame",Main)
+Scroll.Size=UDim2.new(1,0,1,-50)
+Scroll.Position=UDim2.new(0,0,0,50)
+Scroll.BackgroundTransparency=1
+Scroll.BorderSizePixel=0
+Scroll.ScrollBarThickness=3
+Scroll.ScrollBarImageColor3=ACCENT
+Scroll.AutomaticCanvasSize=Enum.AutomaticSize.Y
+Scroll.CanvasSize=UDim2.new(0,0,0,0)
 
-local Pad = Instance.new("UIPadding", Scroll)
-Pad.PaddingTop = UDim.new(0, 8)
-Pad.PaddingBottom = UDim.new(0, 8)
+local List=Instance.new("UIListLayout",Scroll)
+List.Padding=UDim.new(0,5)
+List.HorizontalAlignment=Enum.HorizontalAlignment.Center
 
--- ── SECTION LABEL ──────────────────────────────────────
+local Pad=Instance.new("UIPadding",Scroll)
+Pad.PaddingTop=UDim.new(0,8)
+Pad.PaddingBottom=UDim.new(0,10)
+Pad.PaddingLeft=UDim.new(0,0)
+Pad.PaddingRight=UDim.new(0,0)
+
+-- ── SECTION HEADER ─────────────────────────────────────────────────────
 local function addSection(title)
-    local lbl = Instance.new("TextLabel", Scroll)
-    lbl.Size = UDim2.new(0.92, 0, 0, 20)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = "  " .. title:upper()
-    lbl.TextColor3 = ACCENT
-    lbl.TextSize = 11
-    lbl.Font = Enum.Font.GothamBold
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    local f=Instance.new("Frame",Scroll)
+    f.Size=UDim2.new(0.92,0,0,22)
+    f.BackgroundTransparency=1
+    local l=Instance.new("TextLabel",f)
+    l.Size=UDim2.new(1,0,1,0)
+    l.BackgroundTransparency=1
+    l.Text=title:upper()
+    l.TextColor3=ACCENT
+    l.TextSize=10
+    l.Font=Enum.Font.GothamBold
+    l.TextXAlignment=Enum.TextXAlignment.Left
+    -- divider line
+    local line=Instance.new("Frame",f)
+    line.Size=UDim2.new(1,0,0,1)
+    line.Position=UDim2.new(0,0,1,-1)
+    line.BackgroundColor3=Color3.fromRGB(50,30,70)
+    line.BorderSizePixel=0
 end
 
--- ── TOGGLE ─────────────────────────────────────────────
-local function addToggle(label, key, cb)
-    local row = Instance.new("Frame", Scroll)
-    row.Size = UDim2.new(0.92, 0, 0, 36)
-    row.BackgroundColor3 = SURFACE
-    row.BorderSizePixel = 0
-    corner(row, 8)
+-- ── TOGGLE (pill style) ────────────────────────────────────────────────
+local function addToggle(label,key,cb)
+    local row=Instance.new("Frame",Scroll)
+    row.Size=UDim2.new(0.92,0,0,38)
+    row.BackgroundColor3=SURFACE
+    row.BorderSizePixel=0
+    mkCorner(row,8)
 
-    local lbl = Instance.new("TextLabel", row)
-    lbl.Size = UDim2.new(1, -60, 1, 0)
-    lbl.Position = UDim2.new(0, 12, 0, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = label
-    lbl.TextColor3 = TEXT
-    lbl.TextSize = 13
-    lbl.Font = Enum.Font.GothamSemibold
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    local lbl=Instance.new("TextLabel",row)
+    lbl.Size=UDim2.new(1,-58,1,0)
+    lbl.Position=UDim2.new(0,12,0,0)
+    lbl.BackgroundTransparency=1
+    lbl.Text=label
+    lbl.TextColor3=TEXT
+    lbl.TextSize=13
+    lbl.Font=Enum.Font.GothamSemibold
+    lbl.TextXAlignment=Enum.TextXAlignment.Left
 
-    -- Pill toggle
-    local pill = Instance.new("Frame", row)
-    pill.Size = UDim2.new(0, 44, 0, 22)
-    pill.Position = UDim2.new(1, -54, 0.5, -11)
-    pill.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-    pill.BorderSizePixel = 0
-    corner(pill, 11)
+    local pill=Instance.new("Frame",row)
+    pill.Size=UDim2.new(0,42,0,22)
+    pill.Position=UDim2.new(1,-52,0.5,-11)
+    pill.BackgroundColor3=Color3.fromRGB(45,45,60)
+    pill.BorderSizePixel=0
+    mkCorner(pill,11)
 
-    local knob = Instance.new("Frame", pill)
-    knob.Size = UDim2.new(0, 18, 0, 18)
-    knob.Position = UDim2.new(0, 2, 0.5, -9)
-    knob.BackgroundColor3 = OFF_COL
-    knob.BorderSizePixel = 0
-    corner(knob, 9)
+    local knob=Instance.new("Frame",pill)
+    knob.Size=UDim2.new(0,18,0,18)
+    knob.Position=UDim2.new(0,2,0.5,-9)
+    knob.BackgroundColor3=OFF_COL
+    knob.BorderSizePixel=0
+    mkCorner(knob,9)
 
-    local state = Config[key]
     local function refresh()
-        state = Config[key]
-        knob.BackgroundColor3 = state and ON_COL or OFF_COL
-        knob.Position = state and UDim2.new(1,-20,0.5,-9) or UDim2.new(0,2,0.5,-9)
-        pill.BackgroundColor3 = state and Color3.fromRGB(40,60,45) or Color3.fromRGB(50,50,65)
+        local s=Config[key]
+        knob.BackgroundColor3=s and ON_COL or OFF_COL
+        knob.Position=s and UDim2.new(1,-20,0.5,-9) or UDim2.new(0,2,0.5,-9)
+        pill.BackgroundColor3=s and Color3.fromRGB(30,55,38) or Color3.fromRGB(45,45,60)
     end
     refresh()
 
-    local btn = Instance.new("TextButton", row)
-    btn.Size = UDim2.new(1,0,1,0)
-    btn.BackgroundTransparency = 1
-    btn.Text = ""
+    local btn=Instance.new("TextButton",row)
+    btn.Size=UDim2.new(1,0,1,0)
+    btn.BackgroundTransparency=1
+    btn.Text=""
     btn.MouseButton1Click:Connect(function()
-        Config[key] = not Config[key]
+        Config[key]=not Config[key]
         refresh()
         if cb then cb(Config[key]) end
     end)
 end
 
--- ── SLIDER ─────────────────────────────────────────────
--- Fixed: uses AbsolutePosition correctly, no more broken drag on Delta
-local function addSlider(label, key, min, max, cb)
-    local wrap = Instance.new("Frame", Scroll)
-    wrap.Size = UDim2.new(0.92, 0, 0, 52)
-    wrap.BackgroundColor3 = SURFACE
-    wrap.BorderSizePixel = 0
-    corner(wrap, 8)
+-- ── SLIDER ─────────────────────────────────────────────────────────────
+local function addSlider(label,key,min,max,cb)
+    local wrap=Instance.new("Frame",Scroll)
+    wrap.Size=UDim2.new(0.92,0,0,54)
+    wrap.BackgroundColor3=SURFACE
+    wrap.BorderSizePixel=0
+    mkCorner(wrap,8)
 
-    local lbl = Instance.new("TextLabel", wrap)
-    lbl.Size = UDim2.new(1, -50, 0, 22)
-    lbl.Position = UDim2.new(0, 12, 0, 4)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = label
-    lbl.TextColor3 = TEXT
-    lbl.TextSize = 12
-    lbl.Font = Enum.Font.Gotham
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    local lbl=Instance.new("TextLabel",wrap)
+    lbl.Size=UDim2.new(1,-52,0,22)
+    lbl.Position=UDim2.new(0,12,0,6)
+    lbl.BackgroundTransparency=1
+    lbl.Text=label
+    lbl.TextColor3=TEXT
+    lbl.TextSize=12
+    lbl.Font=Enum.Font.Gotham
+    lbl.TextXAlignment=Enum.TextXAlignment.Left
 
-    local valLbl = Instance.new("TextLabel", wrap)
-    valLbl.Size = UDim2.new(0, 44, 0, 22)
-    valLbl.Position = UDim2.new(1, -52, 0, 4)
-    valLbl.BackgroundTransparency = 1
-    valLbl.Text = tostring(Config[key])
-    valLbl.TextColor3 = ACCENT
-    valLbl.TextSize = 13
-    valLbl.Font = Enum.Font.GothamBold
-    valLbl.TextXAlignment = Enum.TextXAlignment.Right
+    local valLbl=Instance.new("TextLabel",wrap)
+    valLbl.Size=UDim2.new(0,44,0,22)
+    valLbl.Position=UDim2.new(1,-50,0,6)
+    valLbl.BackgroundTransparency=1
+    valLbl.Text=tostring(Config[key])
+    valLbl.TextColor3=ACCENT
+    valLbl.TextSize=13
+    valLbl.Font=Enum.Font.GothamBold
+    valLbl.TextXAlignment=Enum.TextXAlignment.Right
 
-    local track = Instance.new("Frame", wrap)
-    track.Size = UDim2.new(1, -24, 0, 8)
-    track.Position = UDim2.new(0, 12, 0, 34)
-    track.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-    track.BorderSizePixel = 0
-    corner(track, 4)
+    local track=Instance.new("Frame",wrap)
+    track.Size=UDim2.new(1,-24,0,8)
+    track.Position=UDim2.new(0,12,0,36)
+    track.BackgroundColor3=Color3.fromRGB(38,38,52)
+    track.BorderSizePixel=0
+    mkCorner(track,4)
 
-    local fill = Instance.new("Frame", track)
-    fill.Size = UDim2.new((Config[key]-min)/(max-min), 0, 1, 0)
-    fill.BackgroundColor3 = ACCENT
-    fill.BorderSizePixel = 0
-    corner(fill, 4)
+    local fill=Instance.new("Frame",track)
+    fill.Size=UDim2.new((Config[key]-min)/(max-min),0,1,0)
+    fill.BackgroundColor3=ACCENT
+    fill.BorderSizePixel=0
+    mkCorner(fill,4)
 
-    -- Fixed drag: sample AbsolutePosition at drag time, not at definition time
-    local dragging = false
+    local dragging=false
     local function setVal(x)
-        local rel = math.clamp((x - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-        local v = math.floor(min + rel*(max-min))
-        Config[key] = v
-        fill.Size = UDim2.new(rel, 0, 1, 0)
-        valLbl.Text = tostring(v)
+        local rel=math.clamp((x-track.AbsolutePosition.X)/track.AbsoluteSize.X,0,1)
+        local v=math.floor(min+rel*(max-min))
+        Config[key]=v
+        fill.Size=UDim2.new(rel,0,1,0)
+        valLbl.Text=tostring(v)
         if cb then cb(v) end
     end
-
-    track.InputBegan:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1
-        or inp.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            setVal(inp.Position.X)
+    track.InputBegan:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1
+        or i.UserInputType==Enum.UserInputType.Touch then
+            dragging=true setVal(i.Position.X)
         end
     end)
-    UIS.InputEnded:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1
-        or inp.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
+    UIS.InputEnded:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1
+        or i.UserInputType==Enum.UserInputType.Touch then dragging=false end
     end)
-    UIS.InputChanged:Connect(function(inp)
+    UIS.InputChanged:Connect(function(i)
         if not dragging then return end
-        if inp.UserInputType == Enum.UserInputType.MouseMovement
-        or inp.UserInputType == Enum.UserInputType.Touch then
-            setVal(inp.Position.X)
-        end
+        if i.UserInputType==Enum.UserInputType.MouseMovement
+        or i.UserInputType==Enum.UserInputType.Touch then setVal(i.Position.X) end
     end)
 end
 
--- ── BUILD CONTROLS ─────────────────────────────────────
-addSection("Combat")
-addToggle("Auto Grab",      "AutoGrab",           applyAutoGrab)
-addToggle("Auto Play",      "AutoPlay",            applyAutoPlay)
+-- ── BUILD ───────────────────────────────────────────────────────────────
+addSection("⚔  Combat")
+addToggle("Auto Grab",       "AutoGrab",           applyAutoGrab)
+addToggle("Auto Play",       "AutoPlay",            applyAutoPlay)
 
-addSection("Movement")
-addToggle("Speed Hack",     "SpeedEnabled",        applySpeed)
-addSlider("Walk Speed",     "SpeedValue",    16, 32)
-addToggle("Jump Height",    "JumpHeightEnabled",   applyJumpHeight)
-addSlider("Jump Power",     "JumpHeightValue", 50, 120)
-addToggle("Infinite Jump",  "InfiniteJump",        applyInfiniteJump)
-addToggle("Auto Float",     "AutoFloat",           applyFloat)
-addSlider("Float Height",   "FloatHeight",   10, 80)
+addSection("🏃  Movement")
+addToggle("Speed Hack",      "SpeedEnabled",        applySpeed)
+addSlider("Walk Speed",      "SpeedValue",    16, 32)
+addToggle("Jump Height",     "JumpHeightEnabled",   applyJumpHeight)
+addSlider("Jump Power",      "JumpHeightValue", 50, 120)
+addToggle("Infinite Jump",   "InfiniteJump",        applyInfiniteJump)
+addToggle("Auto Float",      "AutoFloat",           applyFloat)
+addSlider("Float Height",    "FloatHeight",   10, 80)
 
-addSection("Camera")
-addToggle("FOV Changer",    "FOVEnabled",          applyFOV)
-addSlider("FOV Value",      "FOVValue",      70, 130)
+addSection("📷  Camera")
+addToggle("FOV Changer",     "FOVEnabled",          applyFOV)
+addSlider("FOV Value",       "FOVValue",      70, 130)
 
--- ── DRAGGABLE ──────────────────────────────────────────
-local dragOrigin, frameOrigin
-TitleBar.InputBegan:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1
-    or inp.UserInputType == Enum.UserInputType.Touch then
-        dragOrigin  = inp.Position
-        frameOrigin = Main.Position
+-- ── DRAG ────────────────────────────────────────────────────────────────
+local dOrigin,dFrame
+TBar.InputBegan:Connect(function(i)
+    if i.UserInputType==Enum.UserInputType.MouseButton1
+    or i.UserInputType==Enum.UserInputType.Touch then
+        dOrigin=i.Position dFrame=Main.Position
     end
 end)
-UIS.InputChanged:Connect(function(inp)
-    if not dragOrigin then return end
-    if inp.UserInputType == Enum.UserInputType.MouseMovement
-    or inp.UserInputType == Enum.UserInputType.Touch then
-        local d = inp.Position - dragOrigin
-        Main.Position = UDim2.new(
-            frameOrigin.X.Scale, frameOrigin.X.Offset + d.X,
-            frameOrigin.Y.Scale, frameOrigin.Y.Offset + d.Y
-        )
+UIS.InputChanged:Connect(function(i)
+    if not dOrigin then return end
+    if i.UserInputType==Enum.UserInputType.MouseMovement
+    or i.UserInputType==Enum.UserInputType.Touch then
+        local d=i.Position-dOrigin
+        Main.Position=UDim2.new(dFrame.X.Scale,dFrame.X.Offset+d.X,dFrame.Y.Scale,dFrame.Y.Offset+d.Y)
     end
 end)
-UIS.InputEnded:Connect(function(inp)
-    if inp.UserInputType == Enum.UserInputType.MouseButton1
-    or inp.UserInputType == Enum.UserInputType.Touch then
-        dragOrigin = nil
-    end
+UIS.InputEnded:Connect(function(i)
+    if i.UserInputType==Enum.UserInputType.MouseButton1
+    or i.UserInputType==Enum.UserInputType.Touch then dOrigin=nil end
 end)
 
--- ── TOGGLE KEYBIND ─────────────────────────────────────
-UIS.InputBegan:Connect(function(inp, gpe)
+-- ── KEYBIND ─────────────────────────────────────────────────────────────
+UIS.InputBegan:Connect(function(i,gpe)
     if gpe then return end
-    if inp.KeyCode == Enum.KeyCode.RightShift then
-        Main.Visible = not Main.Visible
+    if i.KeyCode==Enum.KeyCode.RightShift then
+        Main.Visible=not Main.Visible
     end
 end)
 
-print("[Duels Hub] Loaded — RightShift to toggle")
+-- Show on load so you know it worked
+Main.Visible=true
+task.delay(3,function() Main.Visible=false end)
+
+print("[Duels Hub] Loaded OK — RightShift to toggle")
