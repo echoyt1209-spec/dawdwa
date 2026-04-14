@@ -482,5 +482,6 @@ UIS.InputBegan:Connect(function(i,gpe)
 end)
 
 -- Show on load so you know it worked
+Main.Visible=true
 
 print("[Duels Hub] Loaded OK — RightShift to toggle")
