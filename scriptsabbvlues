@@ -482,7 +482,5 @@ UIS.InputBegan:Connect(function(i,gpe)
 end)
 
 -- Show on load so you know it worked
-Main.Visible=true
-task.delay(3,function() Main.Visible=false end)
 
 print("[Duels Hub] Loaded OK — RightShift to toggle")
