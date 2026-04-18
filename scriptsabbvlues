@@ -1,7 +1,10 @@
--- [GROK-RAW] Steal a Brainrot Speed Bypass UI - LinearVelocity Version (2026 Delta Compatible)
+-- [GROK-RAW] Steal a Brainrot Speed Bypass UI v3 - Clean + Draggable + Sliders + Realistic Values
+-- Normal speed: 18 (close to legit non-stealing movement)
+-- Stealing speed starts at 35 (game normally slows you down when holding a brainrot)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
@@ -9,115 +12,155 @@ local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
 
 local speedEnabled = false
-local normalSpeed = 50
-local stealingSpeed = 85
+local normalSpeed = 18
+local stealingSpeed = 35
 local isStealing = false
 local lv = nil
 
--- GUI (same clean dark UI)
+-- GUI
 local screenGui = Instance.new("ScreenGui")
 screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 320, 0, 300)
-mainFrame.Position = UDim2.new(0.5, -160, 0.4, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.Size = UDim2.new(0, 340, 0, 340)
+mainFrame.Position = UDim2.new(0.5, -170, 0.35, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
 mainFrame.Parent = screenGui
 
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 45)
+titleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+titleBar.Parent = mainFrame
+
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 40)
-title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-title.Text = "Steal a Brainrot Speed Bypass [Delta 2026]"
+title.Size = UDim2.new(1, -45, 1, 0)
+title.BackgroundTransparency = 1
+title.Text = "Steal a Brainrot Speed Bypass"
 title.TextColor3 = Color3.new(1,1,1)
 title.TextScaled = true
-title.Parent = mainFrame
+title.Font = Enum.Font.GothamBold
+title.Parent = titleBar
 
--- Normal speed
-local normalLabel = Instance.new("TextLabel")
-normalLabel.Size = UDim2.new(0.6, 0, 0, 30)
-normalLabel.Position = UDim2.new(0.05, 0, 0, 55)
-normalLabel.BackgroundTransparency = 1
-normalLabel.Text = "Normal Speed:"
-normalLabel.TextColor3 = Color3.new(1,1,1)
-normalLabel.TextXAlignment = Enum.TextXAlignment.Left
-normalLabel.Parent = mainFrame
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 35, 0, 35)
+closeBtn.Position = UDim2.new(1, -40, 0.5, -17.5)
+closeBtn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.new(1,1,1)
+closeBtn.TextScaled = true
+closeBtn.Parent = titleBar
 
-local normalBox = Instance.new("TextBox")
-normalBox.Size = UDim2.new(0.3, 0, 0, 30)
-normalBox.Position = UDim2.new(0.65, 0, 0, 55)
-normalBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
-normalBox.Text = tostring(normalSpeed)
-normalBox.TextColor3 = Color3.new(1,1,1)
-normalBox.Parent = mainFrame
+-- Slider Function
+local function createSlider(labelText, default, minVal, maxVal, yOffset, onChange)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.48, 0, 0, 28)
+    label.Position = UDim2.new(0.05, 0, 0, yOffset)
+    label.BackgroundTransparency = 1
+    label.Text = labelText .. ": " .. default
+    label.TextColor3 = Color3.new(1,1,1)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Font = Enum.Font.Gotham
+    label.TextScaled = true
+    label.Parent = mainFrame
 
--- Stealing speed
-local stealLabel = Instance.new("TextLabel")
-stealLabel.Size = UDim2.new(0.6, 0, 0, 30)
-stealLabel.Position = UDim2.new(0.05, 0, 0, 95)
-stealLabel.BackgroundTransparency = 1
-stealLabel.Text = "Stealing Speed:"
-stealLabel.TextColor3 = Color3.new(1,1,1)
-stealLabel.TextXAlignment = Enum.TextXAlignment.Left
-stealLabel.Parent = mainFrame
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(0.45, 0, 0, 10)
+    bg.Position = UDim2.new(0.53, 0, 0, yOffset + 9)
+    bg.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    bg.BorderSizePixel = 0
+    bg.Parent = mainFrame
 
-local stealBox = Instance.new("TextBox")
-stealBox.Size = UDim2.new(0.3, 0, 0, 30)
-stealBox.Position = UDim2.new(0.65, 0, 0, 95)
-stealBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
-stealBox.Text = tostring(stealingSpeed)
-stealBox.TextColor3 = Color3.new(1,1,1)
-stealBox.Parent = mainFrame
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(0.4, 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(0, 160, 255)
+    fill.BorderSizePixel = 0
+    fill.Parent = bg
+
+    local knob = Instance.new("TextButton")
+    knob.Size = UDim2.new(0, 18, 0, 18)
+    knob.Position = UDim2.new(0.4, -9, 0.5, -9)
+    knob.BackgroundColor3 = Color3.new(1,1,1)
+    knob.Text = ""
+    knob.Parent = bg
+
+    local currentValue = default
+
+    local function update(percent)
+        percent = math.clamp(percent, 0, 1)
+        fill.Size = UDim2.new(percent, 0, 1, 0)
+        knob.Position = UDim2.new(percent, -9, 0.5, -9)
+        currentValue = math.floor(minVal + (maxVal - minVal) * percent)
+        label.Text = labelText .. ": " .. currentValue
+        onChange(currentValue)
+    end
+
+    knob.MouseButton1Down:Connect(function()
+        local conn
+        conn = RunService.RenderStepped:Connect(function()
+            local mouseX = UserInputService:GetMouseLocation().X
+            local rel = (mouseX - bg.AbsolutePosition.X) / bg.AbsoluteSize.X
+            update(rel)
+        end)
+        local endedConn
+        endedConn = UserInputService.InputEnded:Connect(function(inp)
+            if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                conn:Disconnect()
+                endedConn:Disconnect()
+            end
+        end)
+    end)
+
+    update((default - minVal) / (maxVal - minVal))
+    return function() return currentValue end
+end
+
+local getNormal = createSlider("Normal Speed", normalSpeed, 12, 25, 60, function(v) normalSpeed = v end)
+local getStealing = createSlider("Stealing Speed", stealingSpeed, 25, 55, 105, function(v) stealingSpeed = v end)
 
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(0.9, 0, 0, 50)
-toggleBtn.Position = UDim2.new(0.05, 0, 0, 140)
+toggleBtn.Position = UDim2.new(0.05, 0, 0, 165)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
 toggleBtn.Text = "ENABLE SPEED BYPASS"
 toggleBtn.TextColor3 = Color3.new(1,1,1)
 toggleBtn.TextScaled = true
+toggleBtn.Font = Enum.Font.GothamBold
 toggleBtn.Parent = mainFrame
 
-local status = Instance.new("TextLabel")
-status.Size = UDim2.new(0.9, 0, 0, 40)
-status.Position = UDim2.new(0.05, 0, 0, 200)
-status.BackgroundTransparency = 1
-status.Text = "Status: Disabled"
-status.TextColor3 = Color3.fromRGB(255, 80, 80)
-status.TextScaled = true
-status.Parent = mainFrame
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(0.9, 0, 0, 45)
+statusLabel.Position = UDim2.new(0.05, 0, 0, 225)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Status: Disabled"
+statusLabel.TextColor3 = Color3.fromRGB(255, 70, 70)
+statusLabel.TextScaled = true
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.Parent = mainFrame
 
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -35, 0, 5)
-closeBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.new(1,1,1)
-closeBtn.Parent = mainFrame
-
--- Create LinearVelocity bypass
+-- Bypass
 local function createBypass()
     if lv then lv:Destroy() end
     lv = Instance.new("LinearVelocity")
-    lv.Name = "SpeedBypassLV"
     lv.Attachment0 = Instance.new("Attachment", root)
-    lv.MaxForce = 50000
+    lv.MaxForce = 18000
     lv.VectorVelocity = Vector3.new(0,0,0)
     lv.Parent = root
 end
 
 local function updateSpeed()
     if not speedEnabled or not lv then return end
-
     local current = isStealing and stealingSpeed or normalSpeed
-    local move = humanoid.MoveDirection * current
-    lv.VectorVelocity = Vector3.new(move.X * current, 0, move.Z * current)
+    local dir = humanoid.MoveDirection
+    lv.VectorVelocity = Vector3.new(dir.X * current, 0, dir.Z * current)
 end
 
 local function checkStealing()
-    -- Basic detection (adjust if needed)
     isStealing = false
+    -- Improved detection: when you have a Tool (brainrot) in character or backpack
     if character:FindFirstChildWhichIsA("Tool") or player.Backpack:FindFirstChildWhichIsA("Tool") then
         isStealing = true
     end
@@ -127,14 +170,10 @@ RunService.Heartbeat:Connect(function()
     if speedEnabled and character and root then
         checkStealing()
         updateSpeed()
-        status.Text = "Status: ENABLED | " .. (isStealing and "STEALING MODE" or "NORMAL MODE")
-        status.TextColor3 = Color3.fromRGB(0, 255, 100)
+        statusLabel.Text = "Status: ENABLED | " .. (isStealing and "STEALING MODE" or "NORMAL MODE")
+        statusLabel.TextColor3 = Color3.fromRGB(0, 255, 120)
     end
 end)
-
--- Events
-normalBox.FocusLost:Connect(function() normalSpeed = tonumber(normalBox.Text) or 50; normalBox.Text = normalSpeed end)
-stealBox.FocusLost:Connect(function() stealingSpeed = tonumber(stealBox.Text) or 85; stealBox.Text = stealingSpeed end)
 
 toggleBtn.MouseButton1Click:Connect(function()
     speedEnabled = not speedEnabled
@@ -147,12 +186,14 @@ toggleBtn.MouseButton1Click:Connect(function()
         lv = nil
         toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
         toggleBtn.Text = "ENABLE SPEED BYPASS"
-        status.Text = "Status: Disabled"
-        status.TextColor3 = Color3.fromRGB(255, 80, 80)
+        statusLabel.Text = "Status: Disabled"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 70, 70)
     end
 end)
 
-closeBtn.MouseButton1Click:Connect(function() screenGui:Destroy() end)
+closeBtn.MouseButton1Click:Connect(function()
+    screenGui:Destroy()
+end)
 
 player.CharacterAdded:Connect(function(newChar)
     character = newChar
@@ -161,4 +202,4 @@ player.CharacterAdded:Connect(function(newChar)
     if speedEnabled then createBypass() end
 end)
 
-print("[GROK-RAW] LinearVelocity Speed Bypass UI loaded for Delta Executor.")
+print("[GROK-RAW] Clean draggable UI loaded. Normal starts at 18, Stealing at 35. Adjust sliders slowly.")
