@@ -1,0 +1,775 @@
+-- ts file was generated at discord.gg/25ms
+
+local fenv = getfenv()
+
+fenv.IllIlllIllIlllIlllIlllIll = function(_2) end
+fenv.IllIIIIllIIIIIl = function(_3) end
+fenv.IllIlllIllIlllIlllIlllIllIlllIIIlll = function(_4) end
+
+local _ = fenv.IIIIIIIIllllllllIIIIIIII
+
+loadstring([[local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))() local Window = OrionLib:MakeWindow({Name = "Fight in a School Hub (Made by blurdo)", HidePremium = false, SaveConfig = true, ConfigFolder = "OrionTest"}) local StylesTab = Window:MakeTab({ Name = "Styles", Icon = "rbxassetid://4483345998", PremiumOnly = false }) local TakedownsTab = Window:MakeTab({ Name = "Takedowns", Icon = "rbxassetid://4483345998", PremiumOnly = false }) local AutofarmTab = Window:MakeTab({ Name = "Autofarm", Icon = "rbxassetid://4483345998", PremiumOnly = false }) local TeleportsTab = Window:MakeTab({ Name = "Teleports", Icon = "rbxassetid://4483345998", PremiumOnly = false }) local EmotesTab = Window:MakeTab({ Name = "Emotes", Icon = "rbxassetid://4483345998", PremiumOnly = false }) local FunTab = Window:MakeTab({ Name = "Fun", Icon = "rbxassetid://4483345998", PremiumOnly = false }) local chosenSpeed = nil local isShiftHeld = false local speedTextbox = FunTab:AddTextbox({ Name = "Speed", Default = "", TextDisappear = true, Callback = function(text) local speedValue = tonumber(text) if speedValue and speedValue > 0 then chosenSpeed = speedValue local player = game.Players.LocalPlayer local character = player.Character if character then local humanoid = character:FindFirstChildOfClass("Humanoid") if humanoid then humanoid.WalkSpeed = chosenSpeed end end else OrionLib:MakeNotification({ Name = "Invalid Speed", Content = "Please enter a valid speed value greater than 0.", Image = "rbxassetid://4483345998", Time = 3 }) end end }) FunTab:AddButton({ Name = "Reset Speed", Callback = function() local player = game.Players.LocalPlayer local character = player.Character if character then local humanoid = character:FindFirstChildOfClass("Humanoid") if humanoid then if chosenSpeed then humanoid.WalkSpeed = 16 chosenSpeed = nil else humanoid.WalkSpeed = 16 end isShiftHeld = false OrionLib:MakeNotification({ Name = "Speed Reset", Content = "Your character's extra speed has been removed.", Image = "rbxassetid://4483345998", Time = 3 }) end end end }) game:GetService("UserInputService").InputBegan:Connect(function(input, gameProcessed) if gameProcessed then return end if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.LeftShift then isShiftHeld = true end end) game:GetService("UserInputService").InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.LeftShift then isShiftHeld = false end end) game:GetService("RunService").RenderStepped:Connect(function() local player = game.Players.LocalPlayer local character = player.Character if character then local humanoid = character:FindFirstChildOfClass("Humanoid") if humanoid then if chosenSpeed then humanoid.WalkSpeed = chosenSpeed end if isShiftHeld and chosenSpeed then humanoid.WalkSpeed = chosenSpeed end end end end) local function changeTakedown(takedownName) local player = game.Players.LocalPlayer local serverFolder = player:FindFirstChild("Server") if serverFolder then local takedownValue = serverFolder:FindFirstChild("Takedown") if takedownValue and takedownValue:IsA("StringValue") then takedownValue.Value = takedownName OrionLib:MakeNotification({ Name = "Takedown Changed!", Content = "Takedown has been changed to: " .. takedownName, Image = "rbxassetid://4483345998", Time = 3 }) else OrionLib:MakeNotification({ Name = "Error", Content = "Takedown StringValue not found in Server.", Image = "rbxassetid://4483345998", Time = 3 }) end else OrionLib:MakeNotification({ Name = "Error", Content = "Server folder not found in player.", Image = "rbxassetid://4483345998", Time = 3 }) end end local takedownNames = { "Chin Kick", "Sweep Kick", "Super Strength", "Spine Breaker", "Back Breaker", "RKO", "German Suplex", "360 Slam", "Power Bomb", "Shoulder Slam", "Neck Breaker", "Dive In", "Drop Kick", "Over Throw", "Throwdown", "Neck Drop", "Snatch", "Drag", "Back Drop" } for _, takedownName in ipairs(takedownNames) do TakedownsTab:AddButton({ Name = takedownName, Callback = function() changeTakedown(takedownName) end }) end local buttonNames = { "SAVAGE", "Karate", "Ninja", "Aggressive", "Kicker", "Heavy Hitter", "Hitman", "Hawk", "Muay Thai", "CRASH OUT", "Jaw Breaker", "Philly", "Stud", "Squabble", "Bones", "Peak A Boo", "Striker", "Boxer", "Slap Boxer", "Amateur", "Baddie" } local function changeStyle(styleName) local player = game.Players.LocalPlayer local leaderstats = player:FindFirstChild("leaderstats") if leaderstats then local classValue = leaderstats:FindFirstChild("Class") if classValue and classValue:IsA("StringValue") then classValue.Value = styleName OrionLib:MakeNotification({ Name = "Style Changed!", Content = "Style has been changed to: " .. styleName, Image = "rbxassetid://4483345998", Time = 3 }) else OrionLib:MakeNotification({ Name = "Error", Content = "Class StringValue not found in leaderstats.", Image = "rbxassetid://4483345998", Time = 3 }) end end end for _, styleName in ipairs(buttonNames) do StylesTab:AddButton({ Name = styleName, Callback = function() changeStyle(styleName) end }) end local teleportLocations = { ["Gym"] = CFrame.new(-200.762177, 4.49409294, -11.9695215, -0.274173796, 4.6944276e-08, 0.961680174, -3.10783888e-09, 1, -4.97008941e-08, -0.961680174, -1.6615429e-08, -0.274173796), ["Outside"] = CFrame.new(-218.090515, 4.49505663, -155.989746, -0.206638858, -2.45109177e-08, -0.978417277, 2.43946712e-08, 1, -3.02036831e-08, 0.978417277, -3.01094225e-08, -0.206638858), ["LockerRoom"] = CFrame.new(-100.200127, 4.49409246, -29.9776249, -0.0409534052, 6.60126531e-08, -0.999161065, -7.98016728e-08, 1, 6.93389737e-08, 0.999161065, 8.25743882e-08, -0.0409534052), ["Library"] = CFrame.new(-124.827629, 4.49459267, 126.185669, 0.124124169, 6.59995578e-08, 0.992266715, 3.7203316e-09, 1, -6.6979311e-08, -0.992266715, 1.20053123e-08, 0.124124169), ["Cafeteria"] = CFrame.new(-340.142059, 4.49459267, 121.162399, 0.994729578, 6.64028619e-08, -0.102533206, -5.91641012e-08, 1, 7.36403294e-08, 0.102533206, -6.71859297e-08, 0.994729578), ["Roof"] = CFrame.new(-195.359451, 41.4945908, -54.2340965, 0.997549951, 2.53445958e-08, 0.0699581131, -2.97084792e-08, 1, 6.13380706e-08, -0.0699581131, -6.32661354e-08, 0.997549951), ["Gym Bathrooms"] = CFrame.new(-285.901917, 4.49917269, -38.9075012, -0.0247240365, -8.23874469e-10, -0.999694288, 2.44631213e-08, 1, -1.42913847e-09, 0.999694288, -2.44909764e-08, -0.0247240365), ["Nurse"] = CFrame.new(-247.673691, 4.49409437, 155.587585, -0.0174031258, -2.40257675e-10, -0.999848545, -1.53893662e-10, 1, -2.37615427e-10, 0.999848545, 1.49735099e-10, -0.0174031258), ["Library Bathrooms"] = CFrame.new(-234.122589, 4.49459219, 218.540695, 0.999932885, 5.29496837e-08, 0.0115846451, -5.23455874e-08, 1, -5.24495363e-08, -0.0115846451, 5.18396099e-08, 0.999932885), ["Waiting Room"] = CFrame.new(-257.190308, 4.49509239, 104.543633, -0.0386046916, 3.55999923e-08, -0.999254584, -4.57925857e-08, 1, 3.73956759e-08, 0.999254584, 4.72021e-08, -0.0386046916), ["Cafeteria Kitchen"] = CFrame.new(-418.529907, 4.49409294, 121.790405, -0.0307357013, 8.09190848e-09, -0.999527574, 7.98302722e-08, 1, 5.64093394e-09, 0.999527574, -7.9619177e-08, -0.0307357013) } for locationName, locationCFrame in pairs(teleportLocations) do TeleportsTab:AddButton({ Name = "Teleport to " .. locationName, Callback = function() local player = game.Players.LocalPlayer local character = player.Character if character then character:SetPrimaryPartCFrame(locationCFrame) OrionLib:MakeNotification({ Name = "Teleporting", Content = "Teleporting to " .. locationName, Image = "rbxassetid://4483345998", Time = 3 }) end end }) end local emoteAnimations = { ["Facepalm"] = "rbxassetid://72183601488494", ["L Dance"] = "rbxassetid://119797830122478", ["Look At Em"] = "rbxassetid://129993522134701", ["Pointing"] = "rbxassetid://109022328569818", ["Scare Off"] = "rbxassetid://100130267699800", ["Slatt"] = "rbxassetid://120763222024641", ["Stretching"] = "rbxassetid://136062824273742", ["Sturdy"] = "rbxassetid://117042914260311", ["Muscle Flex"] = "rbxassetid://83146673889164", ["Uzi Dance"] = "rbxassetid://85034347911052" } local function playEmote(emoteName) local player = game.Players.LocalPlayer local character = player.Character if character then local humanoid = character:FindFirstChildOfClass("Humanoid") if humanoid then local animation = Instance.new("Animation") animation.AnimationId = emoteAnimations[emoteName] local animationTrack = humanoid:LoadAnimation(animation) animationTrack:Play() local isMoving = false humanoid.Running:Connect(function(speed) if speed > 0 then isMoving = true else isMoving = false end end) game:GetService("RunService").Heartbeat:Connect(function() if isMoving then animationTrack:Stop() end end) end end end for emoteName, _ in pairs(emoteAnimations) do EmotesTab:AddButton({ Name = emoteName, Callback = function() playEmote(emoteName) end }) end FunTab:AddButton({ Name = "Fling all", Callback = function() loadstring(game:HttpGet("https://pastebin.com/raw/zqyDSUWX"))() end }) FunTab:AddButton({ Name = "Teleport to any weapon", Callback = function() loadstring(game:HttpGet("https://pastebin.com/raw/AnshN3Pf"))() end }) local teleportToPlayerTextbox = FunTab:AddTextbox({ Name = "Teleport to Player", Default = "", TextDisappear = true, Callback = function(inputName) local targetPlayer = nil for _, player in pairs(game.Players:GetPlayers()) do if player.Name:lower():sub(1, #inputName) == inputName:lower() then targetPlayer = player break end end if not targetPlayer then for _, player in pairs(game.Players:GetPlayers()) do if player.DisplayName:lower():sub(1, #inputName) == inputName:lower() then targetPlayer = player break end end end if targetPlayer then local character = targetPlayer.Character if character then game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(character.HumanoidRootPart.CFrame) OrionLib:MakeNotification({ Name = "Teleport Success", Content = "Teleported to " .. targetPlayer.Name, Image = "rbxassetid://4483345998", Time = 3 }) end else OrionLib:MakeNotification({ Name = "Player Not Found", Content = "No player with a name containing '" .. inputName .. "' found.", Image = "rbxassetid://4483345998", Time = 3 }) end end }) local teleportToLowestHealthButton = FunTab:AddButton({ Name = "Teleport to Lowest Health Player", Callback = function() local localPlayer = game.Players.LocalPlayer local lowestHealthPlayer = nil local lowestHealth = math.huge for _, player in pairs(game.Players:GetPlayers()) do if player ~= localPlayer then local character = player.Character if character and character:FindFirstChild("Humanoid") then local health = character.Humanoid.Health if health > 0 and health < lowestHealth then lowestHealth = health lowestHealthPlayer = player end end end end if lowestHealthPlayer then local targetCharacter = lowestHealthPlayer.Character if targetCharacter and targetCharacter:FindFirstChild("HumanoidRootPart") then localPlayer.Character:SetPrimaryPartCFrame(targetCharacter.HumanoidRootPart.CFrame) OrionLib:MakeNotification({ Name = "Teleport Success", Content = "Teleported to " .. lowestHealthPlayer.Name .. " (Health: " .. math.floor(lowestHealth) .. ")", Image = "rbxassetid://4483345998", Time = 3 }) end else OrionLib:MakeNotification({ Name = "No Target Found", Content = "No valid player with low health was found.", Image = "rbxassetid://4483345998", Time = 3 }) end end }) FunTab:AddButton({ Name = "Fling Certain Players (GUI Verson)", Callback = function() loadstring(game:HttpGet("https://pastebin.com/raw/89stMhjZ"))() end }) local GameSettingsTab = Window:MakeTab({ Name = "Game Settings", Icon = "rbxassetid://4483345998", PremiumOnly = false }) local isAntiKnockEnabled = false local knockedConnection = nil local function setupKnockedListener(character) local knockedValue = character:WaitForChild("Knocked") knockedConnection = knockedValue:GetPropertyChangedSignal("Value"):Connect(function() if knockedValue.Value == true then knockedValue.Value = false end end) end local function stopAntiKnock(character) if knockedConnection then knockedConnection:Disconnect() knockedConnection = nil end end GameSettingsTab:AddToggle({ Name = "Anti Knock", Default = false, Callback = function(value) isAntiKnockEnabled = value local player = game.Players.LocalPlayer player.CharacterAdded:Connect(function(character) if isAntiKnockEnabled then setupKnockedListener(character) else stopAntiKnock(character) end end) if player.Character then if isAntiKnockEnabled then setupKnockedListener(player.Character) else stopAntiKnock(player.Character) end end if isAntiKnockEnabled then print("Anti Knock is ON, script running.") else print("Anti Knock is OFF, script stopped.") end end }) local UpdateLogsTab = Window:MakeTab({ Name = "Update Logs", Icon = "rbxassetid://4483345998", PremiumOnly = false }) UpdateLogsTab:AddLabel("11/17/24 - Blurdo Fight In a School Hub Release!") UpdateLogsTab:AddLabel("11/30/24 - Added Emotes Sturdy and Muscle Flex In Emotes Tab!") UpdateLogsTab:AddLabel("11/30/24 - Added New Game Settings Tab With Anti Knock!") UpdateLogsTab:AddLabel("11/30/24 - Added Infinite Stamina in Game Settings Tab!") UpdateLogsTab:AddLabel("12/20/24 - Added Kill Aura in Fun Tab!") local infiniteStaminaEnabled = false local heartbeatConnection = nil local animTrack = nil local player = game.Players.LocalPlayer local userInputService = game:GetService("UserInputService") local runService = game:GetService("RunService") local sprintingSpeed = 16 local defaultSpeed = sprintingSpeed local isSprinting = false local infiniteStaminaToggle = GameSettingsTab:AddToggle({ Name = "Infinite Stamina", Default = infiniteStaminaEnabled, Callback = function(state) infiniteStaminaEnabled = state if infiniteStaminaEnabled then local function setupCharacter(character) local humanoid = character:WaitForChild("Humanoid") local animation = Instance.new("Animation") animation.AnimationId = "rbxassetid://18954159936" animTrack = humanoid:LoadAnimation(animation) defaultSpeed = humanoid.WalkSpeed local function onInputBegan(input, gameProcessed) if gameProcessed then return end if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.LeftShift then humanoid.WalkSpeed = sprintingSpeed if not isSprinting then animTrack:Play() isSprinting = true end end end local function onInputEnded(input) if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.LeftShift then if isSprinting then animTrack:Stop() isSprinting = false end humanoid.WalkSpeed = defaultSpeed end end heartbeatConnection = runService.Heartbeat:Connect(function() if infiniteStaminaEnabled and userInputService:IsKeyDown(Enum.KeyCode.LeftShift) then humanoid.WalkSpeed = sprintingSpeed elseif not infiniteStaminaEnabled and userInputService:IsKeyDown(Enum.KeyCode.LeftShift) then humanoid.WalkSpeed = defaultSpeed if isSprinting then animTrack:Stop() isSprinting = false end end end) userInputService.InputBegan:Connect(onInputBegan) userInputService.InputEnded:Connect(onInputEnded) end player.CharacterAdded:Connect(setupCharacter) if player.Character then setupCharacter(player.Character) end local staminaValue = player:FindFirstChild("Stamina") if staminaValue then staminaValue.Value = 100 game:GetService("RunService").Heartbeat:Connect(function() staminaValue.Value = 100 end) end OrionLib:MakeNotification({ Name = "Infinite Stamina Enabled", Content = "Your stamina is now infinite.", Time = 3 }) else local staminaValue = player:FindFirstChild("Stamina") if staminaValue then staminaValue.Value = staminaValue.MaxValue end if heartbeatConnection then heartbeatConnection:Disconnect() heartbeatConnection = nil end local humanoid = player.Character and player.Character:FindFirstChild("Humanoid") if humanoid then humanoid.WalkSpeed = defaultSpeed end if animTrack then animTrack:Stop() isSprinting = false end OrionLib:MakeNotification({ Name = "Infinite Stamina Disabled", Content = "Infinite Stamina OFF", Time = 3 }) end end })]], nil)
+
+local _10 = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
+local _call12 = _10:MakeWindow({
+    ConfigFolder = 'OrionTest',
+    HidePremium = false,
+    Name = 'Fight in a School Hub (Made by blurdo)',
+    SaveConfig = true,
+})
+local _call14 = _call12:MakeTab({
+    PremiumOnly = false,
+    Name = 'Styles',
+    Icon = 'rbxassetid://4483345998',
+})
+local _call16 = _call12:MakeTab({
+    PremiumOnly = false,
+    Name = 'Takedowns',
+    Icon = 'rbxassetid://4483345998',
+})
+
+_call12:MakeTab({
+    PremiumOnly = false,
+    Name = 'Autofarm',
+    Icon = 'rbxassetid://4483345998',
+})
+
+local _call20 = _call12:MakeTab({
+    PremiumOnly = false,
+    Name = 'Teleports',
+    Icon = 'rbxassetid://4483345998',
+})
+local _call22 = _call12:MakeTab({
+    PremiumOnly = false,
+    Name = 'Emotes',
+    Icon = 'rbxassetid://4483345998',
+})
+local _call24 = _call12:MakeTab({
+    PremiumOnly = false,
+    Name = 'Fun',
+    Icon = 'rbxassetid://4483345998',
+})
+
+_call24:AddTextbox({
+    Callback = function(_27)
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Invalid Speed',
+            Content = 'Please enter a valid speed value greater than 0.',
+        })
+    end,
+    TextDisappear = true,
+    Name = 'Speed',
+    Default = '',
+})
+_call24:AddButton({
+    Name = 'Reset Speed',
+    Callback = function()
+        local _call37 = game.Players.LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
+
+        _call37.WalkSpeed = 16
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Speed Reset',
+            Content = "Your character's extra speed has been removed.",
+        })
+    end,
+})
+game:GetService('UserInputService').InputBegan:Connect(function(_45, _45_2) end)
+game:GetService('UserInputService').InputEnded:Connect(function(_51)
+    local _ = _51.UserInputType == Enum.UserInputType.Keyboard
+end)
+game:GetService('RunService').RenderStepped:Connect(function()
+    game.Players.LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
+end)
+_call16:AddButton({
+    Name = 'Chin Kick',
+    Callback = function()
+        local _call75 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call75:IsA('StringValue')
+
+        _call75.Value = 'Chin Kick'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Chin Kick',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Sweep Kick',
+    Callback = function()
+        local _call88 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call88:IsA('StringValue')
+
+        _call88.Value = 'Sweep Kick'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Sweep Kick',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Super Strength',
+    Callback = function()
+        local _call101 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call101:IsA('StringValue')
+
+        _call101.Value = 'Super Strength'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Super Strength',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Spine Breaker',
+    Callback = function()
+        local _call114 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call114:IsA('StringValue')
+
+        _call114.Value = 'Spine Breaker'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Spine Breaker',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Back Breaker',
+    Callback = function()
+        local _call127 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call127:IsA('StringValue')
+
+        _call127.Value = 'Back Breaker'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Back Breaker',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'RKO',
+    Callback = function()
+        local _call140 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call140:IsA('StringValue')
+
+        _call140.Value = 'RKO'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: RKO',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'German Suplex',
+    Callback = function()
+        local _call153 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call153:IsA('StringValue')
+
+        _call153.Value = 'German Suplex'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: German Suplex',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = '360 Slam',
+    Callback = function()
+        local _call166 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call166:IsA('StringValue')
+
+        _call166.Value = '360 Slam'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: 360 Slam',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Power Bomb',
+    Callback = function()
+        local _call179 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call179:IsA('StringValue')
+
+        _call179.Value = 'Power Bomb'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Power Bomb',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Shoulder Slam',
+    Callback = function()
+        local _call192 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call192:IsA('StringValue')
+
+        _call192.Value = 'Shoulder Slam'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Shoulder Slam',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Neck Breaker',
+    Callback = function()
+        local _call205 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call205:IsA('StringValue')
+
+        _call205.Value = 'Neck Breaker'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Neck Breaker',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Dive In',
+    Callback = function()
+        local _call218 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call218:IsA('StringValue')
+
+        _call218.Value = 'Dive In'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Dive In',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Drop Kick',
+    Callback = function()
+        local _call231 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call231:IsA('StringValue')
+
+        _call231.Value = 'Drop Kick'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Drop Kick',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Over Throw',
+    Callback = function()
+        local _call244 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call244:IsA('StringValue')
+
+        _call244.Value = 'Over Throw'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Over Throw',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Throwdown',
+    Callback = function()
+        local _call257 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call257:IsA('StringValue')
+
+        _call257.Value = 'Throwdown'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Throwdown',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Neck Drop',
+    Callback = function()
+        local _call270 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call270:IsA('StringValue')
+
+        _call270.Value = 'Neck Drop'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Neck Drop',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Snatch',
+    Callback = function()
+        local _call283 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call283:IsA('StringValue')
+
+        _call283.Value = 'Snatch'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Snatch',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Drag',
+    Callback = function()
+        local _call296 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call296:IsA('StringValue')
+
+        _call296.Value = 'Drag'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Drag',
+        })
+    end,
+})
+_call16:AddButton({
+    Name = 'Back Drop',
+    Callback = function()
+        local _call309 = game.Players.LocalPlayer:FindFirstChild('Server'):FindFirstChild('Takedown')
+
+        _call309:IsA('StringValue')
+
+        _call309.Value = 'Back Drop'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Takedown Changed!',
+            Content = 'Takedown has been changed to: Back Drop',
+        })
+    end,
+})
+_call14:AddButton({
+    Name = 'SAVAGE',
+    Callback = function()
+        local _call322 = game.Players.LocalPlayer:FindFirstChild('leaderstats'):FindFirstChild('Class')
+
+        _call322:IsA('StringValue')
+
+        _call322.Value = 'SAVAGE'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Style Changed!',
+            Content = 'Style has been changed to: SAVAGE',
+        })
+    end,
+})
+_call14:AddButton({
+    Name = 'Karate',
+    Callback = function()
+        local _call335 = game.Players.LocalPlayer:FindFirstChild('leaderstats'):FindFirstChild('Class')
+
+        _call335:IsA('StringValue')
+
+        _call335.Value = 'Karate'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Style Changed!',
+            Content = 'Style has been changed to: Karate',
+        })
+    end,
+})
+_call14:AddButton({
+    Name = 'Ninja',
+    Callback = function()
+        local _call348 = game.Players.LocalPlayer:FindFirstChild('leaderstats'):FindFirstChild('Class')
+
+        _call348:IsA('StringValue')
+
+        _call348.Value = 'Ninja'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Style Changed!',
+            Content = 'Style has been changed to: Ninja',
+        })
+    end,
+})
+_call14:AddButton({
+    Name = 'Aggressive',
+    Callback = function()
+        local _call361 = game.Players.LocalPlayer:FindFirstChild('leaderstats'):FindFirstChild('Class')
+
+        _call361:IsA('StringValue')
+
+        _call361.Value = 'Aggressive'
+
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Style Changed!',
+            Content = 'Style has been changed to: Aggressive',
+        })
+    end,
+})
+_call14:AddButton({
+    Name = 'Kicker',
+    Callback = function()
+        local _ = game.Players.LocalPlayer.FindFirstChild
+
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Heavy Hitter',
+    Callback = function()
+        local _ = game.Players.LocalPlayer
+
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Hitman',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Hawk',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Muay Thai',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'CRASH OUT',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Jaw Breaker',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Philly',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Stud',
+    Callback = function()
+        local _ = game.Players
+
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Squabble',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Bones',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Peak A Boo',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Striker',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Boxer',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Slap Boxer',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Amateur',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call14:AddButton({
+    Name = 'Baddie',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+CFrame.new(-200.762177, 4.49409294, -11.9695215, -0.274173796, 4.6944276e-8, 0.961680174, -3.10783888e-9, 1, -4.97008941e-8, -0.961680174, -1.6615429000000002e-8, -0.274173796)
+CFrame.new(-218.090515, 4.49505663, -155.989746, -0.206638858, -2.45109177e-8, -0.978417277, 2.4394671199999998e-8, 1, -3.02036831e-8, 0.978417277, -3.01094225e-8, -0.206638858)
+CFrame.new(-100.200127, 4.49409246, -29.9776249, -0.0409534052, 6.6012653100000005e-8, -0.999161065, -7.98016728e-8, 1, 6.9338973699999995e-8, 0.999161065, 8.25743882e-8, -0.0409534052)
+CFrame.new(-124.827629, 4.49459267, 126.185669, 0.124124169, 6.59995578e-8, 0.992266715, 3.7203315999999997e-9, 1, -6.6979311e-8, -0.992266715, 1.20053123e-8, 0.124124169)
+CFrame.new(-195.359451, 41.4945908, -54.2340965, 0.997549951, 2.53445958e-8, 0.0699581131, -2.97084792e-8, 1, 6.1338070600000005e-8, -0.0699581131, -6.32661354e-8, 0.997549951)
+CFrame.new(-285.901917, 4.49917269, -38.9075012, -0.0247240365, -8.23874469e-10, -0.999694288, 2.44631213e-8, 1, -1.42913847e-9, 0.999694288, -2.44909764e-8, -0.0247240365)
+CFrame.new(-234.122589, 4.49459219, 218.540695, 0.999932885, 5.29496837e-8, 0.0115846451, -5.23455874e-8, 1, -5.24495363e-8, -0.0115846451, 5.18396099e-8, 0.999932885)
+CFrame.new(-257.190308, 4.49509239, 104.543633, -0.0386046916, 3.55999923e-8, -0.999254584, -4.57925857e-8, 1, 3.73956759e-8, 0.999254584, 4.72021e-8, -0.0386046916)
+CFrame.new(-418.529907, 4.49409294, 121.790405, -0.0307357013, 8.09190848e-9, -0.999527574, 7.98302722e-8, 1, 5.64093394e-9, 0.999527574, -7.9619177e-8, -0.0307357013)
+_call20:AddButton({
+    Name = 'Teleport to Nurse',
+    Callback = function()
+        game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(-247.673691, 4.49409437, 155.587585, -0.0174031258, -2.4025767499999997e-10, -0.999848545, -1.53893662e-10, 1, -2.37615427e-10, 0.999848545, 1.4973509900000002e-10, -0.0174031258))
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Teleporting',
+            Content = 'Teleporting to Nurse',
+        })
+    end,
+})
+_call20:AddButton({
+    Name = 'Teleport to Cafeteria',
+    Callback = function()
+        game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(CFrame.new(-340.142059, 4.49459267, 121.162399, 0.994729578, 6.640286189999999e-8, -0.102533206, -5.91641012e-8, 1, 7.3640329399999995e-8, 0.102533206, -6.71859297e-8, 0.994729578))
+        _10:MakeNotification({
+            Time = 3,
+            Image = 'rbxassetid://4483345998',
+            Name = 'Teleporting',
+            Content = 'Teleporting to Cafeteria',
+        })
+    end,
+})
+_call20:AddButton({
+    Name = 'Teleport to Outside',
+    Callback = function()
+        local _ = game.Players.LocalPlayer
+
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call20:AddButton({
+    Name = 'Teleport to Waiting Room',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call20:AddButton({
+    Name = 'Teleport to LockerRoom',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call20:AddButton({
+    Name = 'Teleport to Roof',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call20:AddButton({
+    Name = 'Teleport to Library',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call20:AddButton({
+    Name = 'Teleport to Cafeteria Kitchen',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call20:AddButton({
+    Name = 'Teleport to Gym',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call20:AddButton({
+    Name = 'Teleport to Gym Bathrooms',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call20:AddButton({
+    Name = 'Teleport to Library Bathrooms',
+    Callback = function()
+        local _ = game.Players
+
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call22:AddButton({
+    Name = 'L Dance',
+    Callback = function()
+        error('internal 557: <25ms: infinitelooperror>')
+    end,
+})
+_call22:AddButton({
+    Name = 'Sturdy',
+    Callback = function() end,
+})
+_call22:AddButton({
+    Name = 'Facepalm',
+    Callback = function() end,
+})
+_call22:AddButton({
+    Name = 'Look At Em',
+    Callback = function() end,
+})
+_call22:AddButton({
+    Name = 'Uzi Dance',
+    Callback = function() end,
+})
+_call22:AddButton({
+    Name = 'Slatt',
+    Callback = function() end,
+})
+_call22:AddButton({
+    Name = 'Muscle Flex',
+    Callback = function() end,
+})
+_call22:AddButton({
+    Name = 'Scare Off',
+    Callback = function() end,
+})
+_call22:AddButton({
+    Name = 'Stretching',
+    Callback = function() end,
+})
+_call22:AddButton({
+    Name = 'Pointing',
+    Callback = function() end,
+})
+_call24:AddButton({
+    Name = 'Fling all',
+    Callback = function() end,
+})
+_call24:AddButton({
+    Name = 'Teleport to any weapon',
+    Callback = function() end,
+})
+_call24:AddTextbox({
+    Callback = function(_560) end,
+    TextDisappear = true,
+    Name = 'Teleport to Player',
+    Default = '',
+})
+_call24:AddButton({
+    Name = 'Teleport to Lowest Health Player',
+    Callback = function() end,
+})
+_call24:AddButton({
+    Name = 'Fling Certain Players (GUI Verson)',
+    Callback = function() end,
+})
+
+local _call568 = _call12:MakeTab({
+    PremiumOnly = false,
+    Name = 'Game Settings',
+    Icon = 'rbxassetid://4483345998',
+})
+
+_call568:AddToggle({
+    Callback = function(_571) end,
+    Name = 'Anti Knock',
+    Default = false,
+})
+
+local _call573 = _call12:MakeTab({
+    PremiumOnly = false,
+    Name = 'Update Logs',
+    Icon = 'rbxassetid://4483345998',
+})
+
+_call573:AddLabel('11/17/24 - Blurdo Fight In a School Hub Release!')
+_call573:AddLabel('11/30/24 - Added Emotes Sturdy and Muscle Flex In Emotes Tab!')
+_call573:AddLabel('11/30/24 - Added New Game Settings Tab With Anti Knock!')
+_call573:AddLabel('11/30/24 - Added Infinite Stamina in Game Settings Tab!')
+_call573:AddLabel('12/20/24 - Added Kill Aura in Fun Tab!')
+
+local _ = game.Players.LocalPlayer
+
+game:GetService('UserInputService')
+game:GetService('RunService')
+_call568:AddToggle({
+    Callback = function(_592) end,
+    Name = 'Infinite Stamina',
+    Default = false,
+})
